@@ -1,0 +1,90 @@
+﻿<nav class="pcoded-navbar menu-light">
+    <div class="navbar-wrapper">
+        <div class="navbar-content scroll-div">
+            
+            <!-- User Info -->
+            <div class="">
+                <div class="main-menu-header">
+                    <img class="img-radius" src="~/images/avatar-default.jpg" alt="User-Profile-Image">
+                    <div class="user-details">
+                        <div id="more-details">Gestionnaire <i class="fa fa-caret-down"></i></div>
+                    </div>
+                </div>
+                <div class="collapse" id="nav-user-link">
+                    <ul class="list-unstyled">
+                        <li class="list-group-item"><a href="#!"><i class="feather icon-user m-r-5"></i>Voir le profil</a></li>
+                        <li class="list-group-item"><a href="#!"><i class="feather icon-settings m-r-5"></i>Paramètres</a></li>
+                        <li class="list-group-item"><a href="#!"><i class="feather icon-log-out m-r-5"></i>Déconnexion</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Menu Items -->
+            <ul class="nav pcoded-inner-navbar">
+                <li class="nav-item pcoded-menu-caption">
+                    <label>Navigation</label>
+                </li>
+                
+                <!-- Dashboard -->
+                <li class="nav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" && ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")">
+                    <a asp-controller="Home" asp-action="Index" class="nav-link">
+                        <span class="pcoded-micon"><i class="feather icon-home"></i></span>
+                        <span class="pcoded-mtext">Tableau de bord</span>
+                    </a>
+                </li>
+                
+                <li class="nav-item pcoded-menu-caption">
+                    <label>Gestion</label>
+                </li>
+                
+                <!-- Transports -->
+                <li class="nav-item pcoded-hasmenu @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "pcoded-trigger" : "")">
+                    <a href="javascript:void(0)" class="nav-link">
+                        <span class="pcoded-micon"><i class="feather icon-truck"></i></span>
+                        <span class="pcoded-mtext">Transports</span>
+                    </a>
+                    <ul class="pcoded-submenu">
+                        <li class="@(ViewContext.RouteData.Values["action"]?.ToString() == "ListeTransports" ? "active" : "")">
+                            <a asp-controller="Home" asp-action="ListeTransports">
+                                <span class="pcoded-mtext">Liste des transports</span>
+                            </a>
+                        </li>
+                        <li class="@(ViewContext.RouteData.Values["action"]?.ToString() == "FormulaireTransport" ? "active" : "")">
+                            <a asp-controller="Home" asp-action="FormulaireTransport">
+                                <span class="pcoded-mtext">Nouveau transport</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                
+                <!-- Véhicules -->
+                <li class="nav-item">
+                    <a href="#!" class="nav-link">
+                        <span class="pcoded-micon"><i class="feather icon-package"></i></span>
+                        <span class="pcoded-mtext">Véhicules</span>
+                    </a>
+                </li>
+                
+                <!-- Chauffeurs -->
+                <li class="nav-item">
+                    <a href="#!" class="nav-link">
+                        <span class="pcoded-micon"><i class="feather icon-users"></i></span>
+                        <span class="pcoded-mtext">Chauffeurs</span>
+                    </a>
+                </li>
+                
+                <li class="nav-item pcoded-menu-caption">
+                    <label>Autres</label>
+                </li>
+                
+                <!-- Privacy -->
+                <li class="nav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Privacy" ? "active" : "")">
+                    <a asp-controller="Home" asp-action="Privacy" class="nav-link">
+                        <span class="pcoded-micon"><i class="feather icon-shield"></i></span>
+                        <span class="pcoded-mtext">Confidentialité</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

@@ -1,0 +1,200 @@
+﻿@{
+    ViewData["Title"] = "Liste des transports";
+}
+
+<div class="col-sm-12">
+    <div class="card">
+        <div class="card-header">
+            <h5>Tous les transports</h5>
+            <div class="card-header-right">
+                <a asp-action="FormulaireTransport" class="btn btn-primary btn-sm">
+                    <i class="feather icon-plus"></i> Nouveau transport
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Filters -->
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Rechercher</label>
+                        <input type="text" class="form-control" placeholder="Client, trajet...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Statut</label>
+                        <select class="form-control">
+                            <option value="">Tous</option>
+                            <option>En cours</option>
+                            <option>Livré</option>
+                            <option>Annulé</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" class="form-control">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label>&nbsp;</label>
+                    <button type="button" class="btn btn-secondary btn-block">
+                        <i class="feather icon-search"></i> Filtrer
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="selectAll">
+                                    <label class="custom-control-label" for="selectAll"></label>
+                                </div>
+                            </th>
+                            <th>#</th>
+                            <th>Client</th>
+                            <th>Départ</th>
+                            <th>Destination</th>
+                            <th>Date</th>
+                            <th>Chauffeur</th>
+                            <th>Véhicule</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="check1">
+                                    <label class="custom-control-label" for="check1"></label>
+                                </div>
+                            </td>
+                            <td>TR-001</td>
+                            <td>
+                                <h6 class="m-0">Jean Dupont</h6>
+                                <small class="text-muted">jean.dupont@email.com</small>
+                            </td>
+                            <td>Paris 75001</td>
+                            <td>Lyon 69000</td>
+                            <td>23/12/2025 14:30</td>
+                            <td>Marc Dubois</td>
+                            <td>
+                                <span class="badge badge-light-info">Camion - AB-123-CD</span>
+                            </td>
+                            <td>
+                                <label class="badge badge-success">Livré</label>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-icon btn-primary" title="Voir">
+                                        <i class="feather icon-eye"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-icon btn-info" title="Modifier">
+                                        <i class="feather icon-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-icon btn-danger" title="Supprimer">
+                                        <i class="feather icon-trash-2"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="check2">
+                                    <label class="custom-control-label" for="check2"></label>
+                                </div>
+                            </td>
+                            <td>TR-002</td>
+                            <td>
+                                <h6 class="m-0">Marie Martin</h6>
+                                <small class="text-muted">marie.martin@email.com</small>
+                            </td>
+                            <td>Marseille 13000</td>
+                            <td>Nice 06000</td>
+                            <td>23/12/2025 16:00</td>
+                            <td>Sophie Leroy</td>
+                            <td>
+                                <span class="badge badge-light-info">Fourgon - EF-456-GH</span>
+                            </td>
+                            <td>
+                                <label class="badge badge-warning">En cours</label>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-icon btn-primary" title="Voir">
+                                        <i class="feather icon-eye"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-icon btn-info" title="Modifier">
+                                        <i class="feather icon-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-icon btn-danger" title="Supprimer">
+                                        <i class="feather icon-trash-2"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input" id="check3">
+                                    <label class="custom-control-label" for="check3"></label>
+                                </div>
+                            </td>
+                            <td>TR-003</td>
+                            <td>
+                                <h6 class="m-0">Pierre Bernard</h6>
+                                <small class="text-muted">pierre.bernard@email.com</small>
+                            </td>
+                            <td>Toulouse 31000</td>
+                            <td>Bordeaux 33000</td>
+                            <td>22/12/2025 10:00</td>
+                            <td>Luc Moreau</td>
+                            <td>
+                                <span class="badge badge-light-info">Camionnette - IJ-789-KL</span>
+                            </td>
+                            <td>
+                                <label class="badge badge-success">Livré</label>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-icon btn-primary" title="Voir">
+                                        <i class="feather icon-eye"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-icon btn-info" title="Modifier">
+                                        <i class="feather icon-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-icon btn-danger" title="Supprimer">
+                                        <i class="feather icon-trash-2"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-end mt-3">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#!" tabindex="-1">Précédent</a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#!">1</a></li>
+                    <li class="page-item"><a class="page-link" href="#!">2</a></li>
+                    <li class="page-item"><a class="page-link" href="#!">3</a></li>
+                    <li class="page-item">
+                        <a class="page-link" href="#!">Suivant</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
