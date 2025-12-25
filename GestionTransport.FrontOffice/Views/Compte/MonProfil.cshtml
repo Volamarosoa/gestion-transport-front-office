@@ -1,0 +1,49 @@
+@model GestionTransport.FrontOffice.Models.EmployeModel
+
+@{
+    ViewData["Title"] = "Mon Adresse";
+}
+
+<div class="card">
+    <div class="container mt-4">
+        <h2>Gérer mes Adresses de Transport</h2>
+        
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success">@TempData["Success"]</div>
+        }
+        
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger">@TempData["Error"]</div>
+        }
+        <div class="card-body">
+            <h5>@Model.Prenom @Model.Nom</h5>
+            
+            <form asp-action="ModifierAdresse" method="post">
+                <div class="mb-3">
+                    <label class="form-label">Adresse de Départ (Domicile)</label>
+                    <input type="text" class="form-control" name="adresseDepart" value="@Model.AdresseDepart" required />
+                    <small class="text-muted">L'adresse où le transport vous récupère</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Adresse d'Arrivée (Travail)</label>
+                    <input type="text" class="form-control" name="adresseArrivee" value="@Model.AdresseArrivee" required />
+                    <small class="text-muted">L'adresse de votre lieu de travail</small>
+                </div>
+                
+                <input type="hidden" name="lat" value="0" />
+                <input type="hidden" name="lng" value="0" />
+                
+                <button type="submit" class="btn btn-primary">Mettre à jour mes adresses</button>
+                <a asp-action="MonProfil" class="btn btn-secondary">Annuler</a>
+            </form>
+        </div>
+
+        <div class="mt-3 alert alert-info">
+            <strong>Note:</strong> Lorsque vous modifiez vos adresses, les itinéraires de transport sont automatiquement recalculés pour optimiser les trajets.
+        </div>
+    </div>
+    
+</div>

@@ -1,7 +1,11 @@
+using GestionTransport.FrontOffice.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddApplicationServices(); 
 
 var app = builder.Build();
 
