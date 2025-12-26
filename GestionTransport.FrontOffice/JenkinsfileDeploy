@@ -116,15 +116,16 @@ pipeline {
             steps {
                 echo '===== Déploiement vers IIS ====='
                 script {
-                    // Arrêter le site IIS
+                    // Arrêter le site IIS (ignore si déjà arrêté)
                     bat """
                         echo Arret du site IIS...
-                        %systemroot%\\system32\\inetsrv\\appcmd stop site /site.name:"${IIS_SITE_NAME}" || echo Site deja arrete
+                        %systemroot%\\system32\\inetsrv\\appcmd stop site /site.name:"${IIS_SITE_NAME}" 2>nul || exit /b 0
                     """
                     
-                    // Arrêter l'Application Pool
+                    // Arrêter l'Application Pool (ignore si déjà arrêté)
                     bat """
-                        %systemroot%\\system32\\inetsrv\\appcmd stop apppool /apppool.name:"${APP_POOL_NAME}" || echo Pool deja arrete
+                        echo Arret du pool...
+                        %systemroot%\\system32\\inetsrv\\appcmd stop apppool /apppool.name:"${APP_POOL_NAME}" 2>nul || exit /b 0
                     """
                     
                     // Attendre un peu
@@ -164,14 +165,25 @@ pipeline {
             steps {
                 echo '===== Verification de l application ====='
                 script {
-                    try {
-                        bat """
-                            timeout /t 5 /nobreak
-                            curl -f http://localhost:${IIS_PORT} || echo Warning: Application may not be responding yet
-                        """
-                    } catch (Exception e) {
-                        echo "Health check failed, but continuing..."
-                    }
+                    // Attendre que l'application démarre
+                    bat "powershell -Command Start-Sleep -Seconds 5"
+                    
+                    // Tester l'application
+                    bat """
+                        powershell -Command "
+                            try {
+                                \$response = Invoke-WebRequest -Uri http://localhost:${IIS_PORT} -UseBasicParsing -TimeoutSec 10
+                                if (\$response.StatusCode -eq 200) {
+                                    Write-Host '✅ Application OK - Status Code: ' \$response.StatusCode -ForegroundColor Green
+                                } else {
+                                    Write-Host '⚠️ Application repond mais status inattendu: ' \$response.StatusCode -ForegroundColor Yellow
+                                }
+                            } catch {
+                                Write-Host '⚠️ Warning: Application ne repond pas encore: ' \$_.Exception.Message -ForegroundColor Yellow
+                                Write-Host 'Verifiez manuellement http://localhost:${IIS_PORT}'
+                            }
+                        "
+                    """
                 }
             }
         }
@@ -179,18 +191,27 @@ pipeline {
     
     post {
         success {
-            echo '===== BUILD ET DEPLOY REUSSIS! ====='
-            echo "Application: ${APP_NAME}"
-            echo "Branche: ${env.GIT_BRANCH}"
-            echo "Commit: ${env.GIT_COMMIT}"
-            echo "Build: ${env.BUILD_NUMBER}"
-            echo "========================================"
-            echo "URL APPLICATION: http://localhost:${IIS_PORT}"
-            echo "========================================"
+            echo '=========================================='
+            echo '✅ BUILD ET DEPLOY REUSSIS!'
+            echo '=========================================='
+            echo "📦 Application: ${APP_NAME}"
+            echo "🌿 Branche: ${env.GIT_BRANCH}"
+            echo "📌 Commit: ${env.GIT_COMMIT}"
+            echo "🔢 Build: #${env.BUILD_NUMBER}"
+            echo '=========================================='
+            echo "🌐 URL APPLICATION: http://localhost:${IIS_PORT}"
+            echo "📁 Chemin physique: ${DEPLOY_PATH}"
+            echo '=========================================='
+            echo '👉 Teste maintenant dans ton navigateur!'
+            echo '=========================================='
         }
         failure {
-            echo '===== BUILD OU DEPLOY ECHOUE! ====='
+            echo '=========================================='
+            echo '❌ BUILD OU DEPLOY ECHOUE!'
+            echo '=========================================='
             echo "Verifiez les logs ci-dessus"
+            echo "Build: #${env.BUILD_NUMBER}"
+            echo '=========================================='
         }
         always {
             echo '===== Pipeline termine ====='
