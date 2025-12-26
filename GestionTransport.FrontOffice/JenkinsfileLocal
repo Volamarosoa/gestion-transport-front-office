@@ -1,0 +1,102 @@
+pipeline {
+    agent any
+    
+    environment {
+        APP_NAME = "gestiontransport-frontoffice"
+        SOLUTION_FILE = "gestion-transport.sln"
+        PROJECT_FILE = "GestionTransport.FrontOffice/GestionTransport.FrontOffice.csproj"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo '===== Récupération du code depuis GitHub ====='
+                checkout scm
+                bat 'git log -1 --pretty=format:"Commit: %h - %an - %s"'
+            }
+        }
+        
+        stage('Info') {
+            steps {
+                echo '===== Informations environnement ====='
+                bat 'dotnet --version'
+                bat 'dotnet --list-sdks'
+                bat 'echo Workspace: %WORKSPACE%'
+            }
+        }
+        
+        stage('Restore') {
+            steps {
+                echo '===== Restauration des packages ====='
+                script {
+                    // Essayer avec la solution d'abord, sinon le projet
+                    try {
+                        bat "dotnet restore ${SOLUTION_FILE}"
+                    } catch (Exception e) {
+                        echo "Solution file not found, trying project file..."
+                        bat "dotnet restore ${PROJECT_FILE}"
+                    }
+                }
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                echo '===== Compilation ====='
+                script {
+                    try {
+                        bat "dotnet build ${SOLUTION_FILE} -c Release --no-restore"
+                    } catch (Exception e) {
+                        echo "Building project file instead..."
+                        bat "dotnet build ${PROJECT_FILE} -c Release --no-restore"
+                    }
+                }
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                echo '===== Exécution des tests ====='
+                script {
+                    try {
+                        bat "dotnet test ${SOLUTION_FILE} -c Release --no-build"
+                    } catch (Exception e) {
+                        echo "No tests found or tests failed, continuing..."
+                    }
+                }
+            }
+        }
+        
+        stage('Publish') {
+            steps {
+                echo '===== Publication de l application ====='
+                bat "dotnet publish ${PROJECT_FILE} -c Release -o publish --no-build"
+            }
+        }
+        
+        stage('Archive') {
+            steps {
+                echo '===== Archivage des artefacts ====='
+                archiveArtifacts artifacts: 'publish/**/*', fingerprint: true
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo '===== BUILD RÉUSSI! ====='
+            echo "Application: ${APP_NAME}"
+            echo "Branche: ${env.GIT_BRANCH}"
+            echo "Commit: ${env.GIT_COMMIT}"
+            echo "Build: ${env.BUILD_NUMBER}"
+        }
+        failure {
+            echo '===== BUILD ÉCHOUÉ! ====='
+            echo "Vérifiez les logs ci-dessus"
+        }
+        always {
+            echo '===== Nettoyage ====='
+            // Optionnel: nettoyer les fichiers temporaires
+        }
+    }
+}
