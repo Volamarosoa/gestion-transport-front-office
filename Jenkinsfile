@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'mcr.microsoft.com/dotnet/sdk:9.0'
-            args '-u 0:0 -v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
+    agent any  // Agent principal pour Jenkins
 
     environment {
         APP_NAME   = "gestiontransport-frontoffice"
@@ -20,24 +15,52 @@ pipeline {
         }
 
         stage('Restore') {
+            agent {
+                docker {
+                    image 'mcr.microsoft.com/dotnet/sdk:9.0'
+                    args '-u 0:0'
+                    reuseNode true
+                }
+            }
             steps {
                 sh 'dotnet restore gestion-transport.sln'
             }
         }
 
         stage('Build') {
+            agent {
+                docker {
+                    image 'mcr.microsoft.com/dotnet/sdk:9.0'
+                    args '-u 0:0'
+                    reuseNode true
+                }
+            }
             steps {
                 sh 'dotnet build gestion-transport.sln -c Release --no-restore'
             }
         }
 
         stage('Tests') {
+            agent {
+                docker {
+                    image 'mcr.microsoft.com/dotnet/sdk:9.0'
+                    args '-u 0:0'
+                    reuseNode true
+                }
+            }
             steps {
                 sh 'dotnet test gestion-transport.sln -c Release --no-build'
             }
         }
 
         stage('Publish') {
+            agent {
+                docker {
+                    image 'mcr.microsoft.com/dotnet/sdk:9.0'
+                    args '-u 0:0'
+                    reuseNode true
+                }
+            }
             steps {
                 sh '''
                 dotnet publish GestionTransport.FrontOffice/GestionTransport.FrontOffice.csproj \
