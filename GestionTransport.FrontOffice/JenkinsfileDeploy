@@ -165,11 +165,11 @@ pipeline {
             steps {
                 echo '===== Verification de l application ====='
                 script {
-                    // Attendre que l'application démarre
-                    bat "timeout /t 5 /nobreak"
+                    // Attendre 5 secondes avec PowerShell
+                    bat "powershell -Command Start-Sleep -Seconds 5"
                     
-                    // Tester l'application avec PowerShell (commande sur une seule ligne)
-                    bat """powershell -Command "try { \$r = Invoke-WebRequest -Uri http://localhost:${IIS_PORT} -UseBasicParsing -TimeoutSec 10; Write-Host 'Application OK - Status:' \$r.StatusCode -ForegroundColor Green } catch { Write-Host 'Warning: Application ne repond pas encore' -ForegroundColor Yellow; exit 0 }" """
+                    // Tester l'application
+                    bat "powershell -Command \"try { \$r = Invoke-WebRequest -Uri http://localhost:${IIS_PORT} -UseBasicParsing -TimeoutSec 10; Write-Host 'Application OK - Status:' \$r.StatusCode -ForegroundColor Green } catch { Write-Host 'Warning: Application ne repond pas encore' -ForegroundColor Yellow; exit 0 }\""
                 }
             }
         }
