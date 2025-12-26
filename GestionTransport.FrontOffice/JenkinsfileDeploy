@@ -128,7 +128,7 @@ pipeline {
                     """
                     
                     // Attendre un peu
-                    bat "timeout /t 2 /nobreak"
+                    bat "powershell -Command Start-Sleep -Seconds 2"
                     
                     // Copier les fichiers
                     bat """
