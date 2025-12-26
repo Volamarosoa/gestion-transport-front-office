@@ -166,24 +166,10 @@ pipeline {
                 echo '===== Verification de l application ====='
                 script {
                     // Attendre que l'application démarre
-                    bat "powershell -Command Start-Sleep -Seconds 5"
+                    bat "timeout /t 5 /nobreak"
                     
-                    // Tester l'application
-                    bat """
-                        powershell -Command "
-                            try {
-                                \$response = Invoke-WebRequest -Uri http://localhost:${IIS_PORT} -UseBasicParsing -TimeoutSec 10
-                                if (\$response.StatusCode -eq 200) {
-                                    Write-Host '✅ Application OK - Status Code: ' \$response.StatusCode -ForegroundColor Green
-                                } else {
-                                    Write-Host '⚠️ Application repond mais status inattendu: ' \$response.StatusCode -ForegroundColor Yellow
-                                }
-                            } catch {
-                                Write-Host '⚠️ Warning: Application ne repond pas encore: ' \$_.Exception.Message -ForegroundColor Yellow
-                                Write-Host 'Verifiez manuellement http://localhost:${IIS_PORT}'
-                            }
-                        "
-                    """
+                    // Tester l'application avec PowerShell (commande sur une seule ligne)
+                    bat """powershell -Command "try { \$r = Invoke-WebRequest -Uri http://localhost:${IIS_PORT} -UseBasicParsing -TimeoutSec 10; Write-Host 'Application OK - Status:' \$r.StatusCode -ForegroundColor Green } catch { Write-Host 'Warning: Application ne repond pas encore' -ForegroundColor Yellow; exit 0 }" """
                 }
             }
         }
