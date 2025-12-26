@@ -21,19 +21,19 @@ pipeline {
 
         stage('Restore') {
             steps {
-                sh 'dotnet restore gestion-transport'
+                sh 'dotnet restore gestion-transport.sln'
             }
         }
 
         stage('Build') {
             steps {
-                sh 'dotnet build gestion-transport -c Release --no-restore'
+                sh 'dotnet build gestion-transport.sln -c Release --no-restore'
             }
         }
 
         stage('Tests') {
             steps {
-                sh 'dotnet test gestion-transport -c Release --no-build'
+                sh 'dotnet test gestion-transport.sln -c Release --no-build'
             }
         }
 
