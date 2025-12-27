@@ -25,7 +25,6 @@ pipeline {
                 echo '===== Informations environnement ====='
                 bat 'dotnet --version'
                 bat 'dotnet --list-sdks'
-                bat 'echo Workspace: %WORKSPACE%'
             }
         }
         
@@ -36,7 +35,6 @@ pipeline {
                     try {
                         bat "dotnet restore ${SOLUTION_FILE}"
                     } catch (Exception e) {
-                        echo "Solution file not found, trying project file..."
                         bat "dotnet restore ${PROJECT_FILE}"
                     }
                 }
@@ -50,7 +48,6 @@ pipeline {
                     try {
                         bat "dotnet build ${SOLUTION_FILE} -c Release --no-restore"
                     } catch (Exception e) {
-                        echo "Building project file instead..."
                         bat "dotnet build ${PROJECT_FILE} -c Release --no-restore"
                     }
                 }
@@ -64,7 +61,7 @@ pipeline {
                     try {
                         bat "dotnet test ${SOLUTION_FILE} -c Release --no-build"
                     } catch (Exception e) {
-                        echo "No tests found or tests failed, continuing..."
+                        echo "No tests found, continuing..."
                     }
                 }
             }
@@ -79,33 +76,24 @@ pipeline {
         
         stage('Setup IIS') {
             steps {
-                echo '===== Configuration automatique IIS ====='
+                echo '===== Configuration IIS ====='
                 script {
-                    // Créer le dossier de déploiement
                     bat """
                         if not exist "${DEPLOY_PATH}" mkdir "${DEPLOY_PATH}"
                     """
                     
-                    // Créer l'Application Pool s'il n'existe pas
                     bat """
                         %systemroot%\\system32\\inetsrv\\appcmd list apppool /name:"${APP_POOL_NAME}" >nul 2>&1
                         if errorlevel 1 (
-                            echo Creation de l Application Pool...
                             %systemroot%\\system32\\inetsrv\\appcmd add apppool /name:"${APP_POOL_NAME}" /managedRuntimeVersion:""
-                        ) else (
-                            echo Application Pool existe deja
                         )
                     """
                     
-                    // Créer le site IIS s'il n'existe pas
                     bat """
                         %systemroot%\\system32\\inetsrv\\appcmd list site /name:"${IIS_SITE_NAME}" >nul 2>&1
                         if errorlevel 1 (
-                            echo Creation du site IIS...
                             %systemroot%\\system32\\inetsrv\\appcmd add site /name:"${IIS_SITE_NAME}" /physicalPath:"${DEPLOY_PATH}" /bindings:http/*:${IIS_PORT}:
                             %systemroot%\\system32\\inetsrv\\appcmd set app "${IIS_SITE_NAME}/" /applicationPool:"${APP_POOL_NAME}"
-                        ) else (
-                            echo Site IIS existe deja
                         )
                     """
                 }
@@ -116,61 +104,19 @@ pipeline {
             steps {
                 echo '===== Déploiement vers IIS ====='
                 script {
-                    // Arrêter le site IIS (ignore si déjà arrêté)
-                    bat """
-                        echo Arret du site IIS...
-                        %systemroot%\\system32\\inetsrv\\appcmd stop site /site.name:"${IIS_SITE_NAME}" 2>nul || exit /b 0
-                    """
-                    
-                    // Arrêter l'Application Pool (ignore si déjà arrêté)
-                    bat """
-                        echo Arret du pool...
-                        %systemroot%\\system32\\inetsrv\\appcmd stop apppool /apppool.name:"${APP_POOL_NAME}" 2>nul || exit /b 0
-                    """
-                    
-                    // Attendre un peu
+                    bat "%systemroot%\\system32\\inetsrv\\appcmd stop site /site.name:\"${IIS_SITE_NAME}\" 2>nul || exit /b 0"
+                    bat "%systemroot%\\system32\\inetsrv\\appcmd stop apppool /apppool.name:\"${APP_POOL_NAME}\" 2>nul || exit /b 0"
                     bat "powershell -Command Start-Sleep -Seconds 2"
-                    
-                    // Copier les fichiers
-                    bat """
-                        echo Copie des fichiers vers IIS...
-                        xcopy /E /I /Y publish\\* "${DEPLOY_PATH}\\"
-                    """
-                    
-                    // Redémarrer l'Application Pool
-                    bat """
-                        echo Redemarrage de l Application Pool...
-                        %systemroot%\\system32\\inetsrv\\appcmd start apppool /apppool.name:"${APP_POOL_NAME}"
-                    """
-                    
-                    // Redémarrer le site IIS
-                    bat """
-                        echo Redemarrage du site IIS...
-                        %systemroot%\\system32\\inetsrv\\appcmd start site /site.name:"${IIS_SITE_NAME}"
-                    """
-                    
-                    echo "Application deployee sur http://localhost:${IIS_PORT}"
+                    bat "xcopy /E /I /Y publish\\* \"${DEPLOY_PATH}\\\""
+                    bat "%systemroot%\\system32\\inetsrv\\appcmd start apppool /apppool.name:\"${APP_POOL_NAME}\""
+                    bat "%systemroot%\\system32\\inetsrv\\appcmd start site /site.name:\"${IIS_SITE_NAME}\""
                 }
             }
         }
         
         stage('Archive') {
             steps {
-                echo '===== Archivage des artefacts ====='
                 archiveArtifacts artifacts: 'publish/**/*', fingerprint: true
-            }
-        }
-        
-        stage('Health Check') {
-            steps {
-                echo '===== Verification de l application ====='
-                script {
-                    // Attendre 5 secondes avec PowerShell
-                    bat "powershell -Command Start-Sleep -Seconds 5"
-                    
-                    // Tester l'application
-                    bat "powershell -Command \"try { \$r = Invoke-WebRequest -Uri http://localhost:${IIS_PORT} -UseBasicParsing -TimeoutSec 10; Write-Host 'Application OK - Status:' \$r.StatusCode -ForegroundColor Green } catch { Write-Host 'Warning: Application ne repond pas encore' -ForegroundColor Yellow; exit 0 }\""
-                }
             }
         }
     }
@@ -181,26 +127,14 @@ pipeline {
             echo '✅ BUILD ET DEPLOY REUSSIS!'
             echo '=========================================='
             echo "📦 Application: ${APP_NAME}"
-            echo "🌿 Branche: ${env.GIT_BRANCH}"
-            echo "📌 Commit: ${env.GIT_COMMIT}"
-            echo "🔢 Build: #${env.BUILD_NUMBER}"
+            echo "🌐 URL: http://localhost:${IIS_PORT}"
+            echo "📁 Chemin: ${DEPLOY_PATH}"
             echo '=========================================='
-            echo "🌐 URL APPLICATION: http://localhost:${IIS_PORT}"
-            echo "📁 Chemin physique: ${DEPLOY_PATH}"
-            echo '=========================================='
-            echo '👉 Teste maintenant dans ton navigateur!'
+            echo '👉 Teste dans ton navigateur!'
             echo '=========================================='
         }
         failure {
-            echo '=========================================='
-            echo '❌ BUILD OU DEPLOY ECHOUE!'
-            echo '=========================================='
-            echo "Verifiez les logs ci-dessus"
-            echo "Build: #${env.BUILD_NUMBER}"
-            echo '=========================================='
-        }
-        always {
-            echo '===== Pipeline termine ====='
+            echo '❌ DEPLOY ECHOUE - Verifiez les logs'
         }
     }
 }
