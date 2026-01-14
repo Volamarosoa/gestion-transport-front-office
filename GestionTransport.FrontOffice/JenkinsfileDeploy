@@ -124,17 +124,17 @@ pipeline {
     post {
         success {
             echo '=========================================='
-            echo '✅ BUILD ET DEPLOY REUSSIS!'
+            echo ' BUILD ET DEPLOY REUSSIS!'
             echo '=========================================='
-            echo "📦 Application: ${APP_NAME}"
-            echo "🌐 URL: http://localhost:${IIS_PORT}"
-            echo "📁 Chemin: ${DEPLOY_PATH}"
+            echo " Application: ${APP_NAME}"
+            echo " URL: http://localhost:${IIS_PORT}"
+            echo " Chemin: ${DEPLOY_PATH}"
             echo '=========================================='
-            echo '👉 Teste dans ton navigateur!'
+            echo ' Teste dans ton navigateur!'
             echo '=========================================='
         }
         failure {
-            echo '❌ DEPLOY ECHOUE - Verifiez les logs'
+            echo ' DEPLOY ECHOUE - Verifiez les logs'
         }
     }
 }
