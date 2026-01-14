@@ -22,13 +22,13 @@
             
             <form asp-action="ModifierAdresse" method="post">
                 <div class="mb-3">
-                    <label class="form-label">Adresse de Départ (Domicile)</label>
+                    <label class="form-label">Adresse de départ (Domicile)</label>
                     <input type="text" class="form-control" name="adresseDepart" value="@Model.AdresseDepart" required />
                     <small class="text-muted">L'adresse où le transport vous récupère</small>
                 </div>
                 
                 <div class="mb-3">
-                    <label class="form-label">Adresse d'Arrivée (Travail)</label>
+                    <label class="form-label">Adresse d'arrivée (Travail)</label>
                     <input type="text" class="form-control" name="adresseArrivee" value="@Model.AdresseArrivee" required />
                     <small class="text-muted">L'adresse de votre lieu de travail</small>
                 </div>

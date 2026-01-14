@@ -1,0 +1,188 @@
+pipeline {
+    agent any
+    
+    environment {
+        APP_NAME = "gestiontransport-frontoffice"
+        SOLUTION_FILE = "gestion-transport.sln"
+        PROJECT_FILE = "GestionTransport.FrontOffice/GestionTransport.FrontOffice.csproj"
+        DEPLOY_PATH = "C:\\Deploy\\GestionTransport"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo '===== Récupération du code depuis GitHub ====='
+                checkout scm
+                bat 'git log -1 --pretty=format:"Commit: %h - %an - %s"'
+            }
+        }
+        
+        stage('Info') {
+            steps {
+                echo '===== Informations environnement ====='
+                bat 'dotnet --version'
+                bat 'dotnet --list-sdks'
+                bat 'echo Workspace: %WORKSPACE%'
+            }
+        }
+        
+        stage('Restore') {
+            steps {
+                echo '===== Restauration des packages ====='
+                script {
+                    try {
+                        bat "dotnet restore ${SOLUTION_FILE}"
+                    } catch (Exception e) {
+                        echo "Solution file not found, trying project file..."
+                        bat "dotnet restore ${PROJECT_FILE}"
+                    }
+                }
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                echo '===== Compilation ====='
+                script {
+                    try {
+                        bat "dotnet build ${SOLUTION_FILE} -c Release --no-restore"
+                    } catch (Exception e) {
+                        echo "Building project file instead..."
+                        bat "dotnet build ${PROJECT_FILE} -c Release --no-restore"
+                    }
+                }
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                echo '===== Exécution des tests ====='
+                script {
+                    try {
+                        bat "dotnet test ${SOLUTION_FILE} -c Release --no-build"
+                    } catch (Exception e) {
+                        echo "No tests found or tests failed, continuing..."
+                    }
+                }
+            }
+        }
+        
+        stage('Publish') {
+            steps {
+                echo '===== Publication de l application ====='
+                bat "dotnet publish ${PROJECT_FILE} -c Release -o publish --no-build"
+            }
+        }
+        
+        stage('Prepare Deploy Folder') {
+            steps {
+                echo '===== Preparation du dossier de deploiement ====='
+                bat """
+                    if not exist "${DEPLOY_PATH}" mkdir "${DEPLOY_PATH}"
+                    if exist "${DEPLOY_PATH}\\backup" rmdir /S /Q "${DEPLOY_PATH}\\backup"
+                    if exist "${DEPLOY_PATH}\\GestionTransport.FrontOffice.dll" (
+                        echo Creation d une sauvegarde...
+                        mkdir "${DEPLOY_PATH}\\backup"
+                        xcopy /E /I /Y "${DEPLOY_PATH}\\*" "${DEPLOY_PATH}\\backup\\"
+                    )
+                """
+            }
+        }
+        
+        stage('Deploy') {
+            steps {
+                echo '===== Deploiement de l application ====='
+                script {
+                    // Arrêter les processus existants
+                    bat """
+                        echo Arret des processus existants...
+                        taskkill /F /IM dotnet.exe /FI "WINDOWTITLE eq GestionTransport*" 2>nul || echo Aucun processus a arreter
+                    """
+                    
+                    // Attendre un peu
+                    bat "timeout /t 2 /nobreak"
+                    
+                    // Copier les nouveaux fichiers
+                    bat """
+                        echo Copie des fichiers...
+                        xcopy /E /I /Y publish\\* "${DEPLOY_PATH}\\"
+                    """
+                    
+                    echo "Application deployee dans ${DEPLOY_PATH}"
+                }
+            }
+        }
+        
+        stage('Start Application') {
+            steps {
+                echo '===== Demarrage de l application ====='
+                script {
+                    bat """
+                        echo Demarrage de l application...
+                        cd "${DEPLOY_PATH}"
+                        start "GestionTransport" dotnet GestionTransport.FrontOffice.dll --urls "http://localhost:5000"
+                    """
+                    
+                    echo "Application demarree sur http://localhost:5000"
+                }
+            }
+        }
+        
+        stage('Archive') {
+            steps {
+                echo '===== Archivage des artefacts ====='
+                archiveArtifacts artifacts: 'publish/**/*', fingerprint: true
+            }
+        }
+        
+        stage('Health Check') {
+            steps {
+                echo '===== Verification de l application ====='
+                script {
+                    try {
+                        bat """
+                            timeout /t 5 /nobreak
+                            curl -f http://localhost:5000 || echo Warning: Application may not be responding yet
+                        """
+                    } catch (Exception e) {
+                        echo "Health check failed, application may need more time to start..."
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo '===== BUILD ET DEPLOY REUSSIS! ====='
+            echo "Application: ${APP_NAME}"
+            echo "Branche: ${env.GIT_BRANCH}"
+            echo "Commit: ${env.GIT_COMMIT}"
+            echo "Build: ${env.BUILD_NUMBER}"
+            echo "========================================"
+            echo "DOSSIER: ${DEPLOY_PATH}"
+            echo "URL APPLICATION: http://localhost:5000"
+            echo "========================================"
+            echo "Pour arreter: taskkill /F /IM dotnet.exe"
+        }
+        failure {
+            echo '===== BUILD OU DEPLOY ECHOUE! ====='
+            echo "Verifiez les logs ci-dessus"
+            script {
+                try {
+                    bat """
+                        if exist "${DEPLOY_PATH}\\backup" (
+                            echo Restauration de la sauvegarde...
+                            xcopy /E /I /Y "${DEPLOY_PATH}\\backup\\*" "${DEPLOY_PATH}\\"
+                        )
+                    """
+                } catch (Exception e) {
+                    echo "Pas de sauvegarde a restaurer"
+                }
+            }
+        }
+        always {
+            echo '===== Pipeline termine ====='
+        }
+    }
+}

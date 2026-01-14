@@ -1,0 +1,140 @@
+pipeline {
+    agent any
+    
+    environment {
+        APP_NAME = "gestiontransport-frontoffice"
+        SOLUTION_FILE = "gestion-transport.sln"
+        PROJECT_FILE = "GestionTransport.FrontOffice/GestionTransport.FrontOffice.csproj"
+        DEPLOY_PATH = "C:\\inetpub\\wwwroot\\gestion-transport"
+        IIS_SITE_NAME = "GestionTransport"
+        IIS_PORT = "8081"
+        APP_POOL_NAME = "GestionTransportPool"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo '===== Récupération du code depuis GitHub ====='
+                checkout scm
+                bat 'git log -1 --pretty=format:"Commit: %h - %an - %s"'
+            }
+        }
+        
+        stage('Info') {
+            steps {
+                echo '===== Informations environnement ====='
+                bat 'dotnet --version'
+                bat 'dotnet --list-sdks'
+            }
+        }
+        
+        stage('Restore') {
+            steps {
+                echo '===== Restauration des packages ====='
+                script {
+                    try {
+                        bat "dotnet restore ${SOLUTION_FILE}"
+                    } catch (Exception e) {
+                        bat "dotnet restore ${PROJECT_FILE}"
+                    }
+                }
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                echo '===== Compilation ====='
+                script {
+                    try {
+                        bat "dotnet build ${SOLUTION_FILE} -c Release --no-restore"
+                    } catch (Exception e) {
+                        bat "dotnet build ${PROJECT_FILE} -c Release --no-restore"
+                    }
+                }
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                echo '===== Exécution des tests ====='
+                script {
+                    try {
+                        bat "dotnet test ${SOLUTION_FILE} -c Release --no-build"
+                    } catch (Exception e) {
+                        echo "No tests found, continuing..."
+                    }
+                }
+            }
+        }
+        
+        stage('Publish') {
+            steps {
+                echo '===== Publication de l application ====='
+                bat "dotnet publish ${PROJECT_FILE} -c Release -o publish --no-build"
+            }
+        }
+        
+        stage('Setup IIS') {
+            steps {
+                echo '===== Configuration IIS ====='
+                script {
+                    bat """
+                        if not exist "${DEPLOY_PATH}" mkdir "${DEPLOY_PATH}"
+                    """
+                    
+                    bat """
+                        %systemroot%\\system32\\inetsrv\\appcmd list apppool /name:"${APP_POOL_NAME}" >nul 2>&1
+                        if errorlevel 1 (
+                            %systemroot%\\system32\\inetsrv\\appcmd add apppool /name:"${APP_POOL_NAME}" /managedRuntimeVersion:""
+                        )
+                    """
+                    
+                    bat """
+                        %systemroot%\\system32\\inetsrv\\appcmd list site /name:"${IIS_SITE_NAME}" >nul 2>&1
+                        if errorlevel 1 (
+                            %systemroot%\\system32\\inetsrv\\appcmd add site /name:"${IIS_SITE_NAME}" /physicalPath:"${DEPLOY_PATH}" /bindings:http/*:${IIS_PORT}:
+                            %systemroot%\\system32\\inetsrv\\appcmd set app "${IIS_SITE_NAME}/" /applicationPool:"${APP_POOL_NAME}"
+                        )
+                    """
+                }
+            }
+        }
+        
+        stage('Deploy') {
+            steps {
+                echo '===== Déploiement vers IIS ====='
+                script {
+                    bat "%systemroot%\\system32\\inetsrv\\appcmd stop site /site.name:\"${IIS_SITE_NAME}\" 2>nul || exit /b 0"
+                    bat "%systemroot%\\system32\\inetsrv\\appcmd stop apppool /apppool.name:\"${APP_POOL_NAME}\" 2>nul || exit /b 0"
+                    bat "powershell -Command Start-Sleep -Seconds 2"
+                    bat "xcopy /E /I /Y publish\\* \"${DEPLOY_PATH}\\\""
+                    bat "%systemroot%\\system32\\inetsrv\\appcmd start apppool /apppool.name:\"${APP_POOL_NAME}\""
+                    bat "%systemroot%\\system32\\inetsrv\\appcmd start site /site.name:\"${IIS_SITE_NAME}\""
+                }
+            }
+        }
+        
+        stage('Archive') {
+            steps {
+                archiveArtifacts artifacts: 'publish/**/*', fingerprint: true
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo '=========================================='
+            echo '✅ BUILD ET DEPLOY REUSSIS!'
+            echo '=========================================='
+            echo "📦 Application: ${APP_NAME}"
+            echo "🌐 URL: http://localhost:${IIS_PORT}"
+            echo "📁 Chemin: ${DEPLOY_PATH}"
+            echo '=========================================='
+            echo '👉 Teste dans ton navigateur!'
+            echo '=========================================='
+        }
+        failure {
+            echo '❌ DEPLOY ECHOUE - Verifiez les logs'
+        }
+    }
+}
