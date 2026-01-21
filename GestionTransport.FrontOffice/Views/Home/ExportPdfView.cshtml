@@ -1,0 +1,220 @@
+@model PaginatedViewModel<AffectationModel>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Liste des Affectations</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            background: white;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #007bff;
+        }
+        
+        .header h1 {
+            color: #007bff;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 11px;
+        }
+        
+        thead {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+        }
+        
+        th {
+            padding: 12px 8px;
+            text-align: left;
+            font-weight: 600;
+            border-right: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        th:last-child {
+            border-right: none;
+        }
+        
+        td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        tbody tr:hover {
+            background-color: #e9ecef;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .badge-success {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .badge-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .badge-warning {
+            background-color: #ffc107;
+            color: #000;
+        }
+        
+        .badge-info {
+            background-color: #17a2b8;
+            color: white;
+        }
+        
+        .text-muted {
+            color: #6c757d;
+            font-size: 10px;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+        }
+        
+        .id-cell {
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .truncate {
+            max-width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        @@media print {
+            body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📋 Liste des Affectations de Transport</h1>
+        <div class="header-info">
+            <div>
+                <strong>Date de génération :</strong> @DateTime.Now.ToString("dddd dd MMMM yyyy à HH:mm")
+            </div>
+            <div>
+                <strong>Total :</strong> @Model.TotalItems affectation(s)
+            </div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 40px;">#</th>
+                <th style="width: 120px;">Employé</th>
+                <th style="width: 100px;">Site</th>
+                <th style="width: 150px;">Adresse</th>
+                <th style="width: 80px;">Date</th>
+                <th style="width: 80px;">Heure</th>
+                <th style="width: 60px;">Type</th>
+                <th style="width: 80px;">Véhicule</th>
+                <th style="width: 70px;">Statut</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var affectation in Model.Items)
+            {
+                var statutClass = affectation.EstValidee == true ? "badge-success" :
+                                 affectation.EstValidee == false ? "badge-danger" :
+                                 "badge-warning";
+                
+                <tr>
+                    <td class="id-cell">@affectation.Id.ToString("D3")</td>
+                    <td>
+                        <strong>@affectation.Employe?.NomComplet()</strong><br />
+                        <span class="text-muted">@affectation.Employe?.Matricule</span>
+                    </td>
+                    <td>@affectation.Site?.Nom</td>
+                    <td class="truncate" title="@affectation.Adresse?.Adresse">
+                        @(affectation.Adresse?.Adresse?.Length > 40 ? affectation.Adresse?.Adresse.Substring(0, 40) + "..." : affectation.Adresse?.Adresse)
+                    </td>
+                    <td>@affectation.DateTransport?.FormatDate()</td>
+                    <td>
+                        <strong>@affectation.HeureTransport?.FormatHeure()</strong><br />
+                        <span class="text-muted">@affectation.HeureTransport?.Libelle</span>
+                    </td>
+                    <td>
+                        <span class="badge badge-info">@affectation.TypeTransport?.Libelle</span>
+                    </td>
+                    <td>
+                        @if (affectation.Vehicule != null)
+                        {
+                            <strong>@affectation.Vehicule.Matricule</strong><br />
+                            <span class="text-muted">@affectation.Vehicule.NombrePlaces places</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Non affecté</span>
+                        }
+                    </td>
+                    <td>
+                        <span class="badge @statutClass">@affectation.GetStatut()</span>
+                        @if (affectation.EstArchive)
+                        {
+                            <br /><span class="text-muted">Archivé</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p><strong>Gestion de Transport</strong> - Document généré automatiquement</p>
+        <p>Ce document contient des informations confidentielles</p>
+    </div>
+</body>
+</html>

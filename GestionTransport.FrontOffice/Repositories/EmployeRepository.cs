@@ -1,4 +1,4 @@
-using GestionTransport.FrontOffice.Models;
+using GestionTransport.FrontOffice.Models.Employe;
 using GestionTransport.FrontOffice.Repositories.Interfaces;
 using GestionTransport.FrontOffice.Services;
 using Microsoft.Data.SqlClient;

@@ -2,8 +2,9 @@
     <div class="m-header">
         <a class="mobile-menu" id="mobile-collapse" href="#!"><span></span></a>
         <a href="@Url.Action("Index", "Home")" class="b-brand">
-            <img src="~/images/logo.png" alt="Logo" class="logo">
-            <img src="~/images/logo-icon.png" alt="Logo" class="logo-thumb">
+            <div class="brand-logo">
+                <span class="brand-text">TRANSPORT</span>
+            </div>
         </a>
         <a href="#!" class="mob-toggler">
             <i class="feather icon-more-vertical"></i>
@@ -15,7 +16,7 @@
             <li class="nav-item">
                 <a href="#!" class="pop-search"><i class="feather icon-search"></i></a>
                 <div class="search-bar">
-                    <input type="text" class="form-control border-0 shadow-none" placeholder="Rechercher...">
+                    <input type="text" class="form-control border-0 shadow-none" placeholder="Rechercher une affectation, un employé...">
                     <button type="button" class="close" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -24,59 +25,120 @@
         </ul>
         
         <ul class="navbar-nav ml-auto">
-            <!-- Notifications -->
+            <!-- Notifications améliorées -->
             <li>
                 <div class="dropdown">
                     <a class="dropdown-toggle" href="#" data-toggle="dropdown">
                         <i class="icon feather icon-bell"></i>
+                        <span class="badge badge-pill badge-danger notification-count">3</span>
                     </a>
                     <div class="dropdown-menu dropdown-menu-right notification">
                         <div class="noti-head">
                             <h6 class="d-inline-block m-b-0">Notifications</h6>
                             <div class="float-right">
-                                <a href="#!" class="m-r-10">marquer comme lu</a>
-                                <a href="#!">tout effacer</a>
+                                <a href="#!" class="m-r-10 text-primary">Marquer comme lu</a>
+                                <a href="#!" class="text-muted">Tout effacer</a>
                             </div>
                         </div>
                         <ul class="noti-body">
                             <li class="n-title">
-                                <p class="m-b-0">NOUVEAU</p>
+                                <p class="m-b-0">NOUVELLES</p>
+                            </li>
+                            <li class="notification unread">
+                                <div class="media">
+                                    <div class="notification-icon bg-primary">
+                                        <i class="feather icon-check-circle"></i>
+                                    </div>
+                                    <div class="media-body">
+                                        <p><strong>Transport validé</strong>
+                                            <span class="n-time text-muted">
+                                                <i class="icon feather icon-clock m-r-10"></i>5 min
+                                            </span>
+                                        </p>
+                                        <p class="small">Votre transport #045 a été validé</p>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="notification unread">
+                                <div class="media">
+                                    <div class="notification-icon bg-warning">
+                                        <i class="feather icon-alert-triangle"></i>
+                                    </div>
+                                    <div class="media-body">
+                                        <p><strong>Modification d'horaire</strong>
+                                            <span class="n-time text-muted">
+                                                <i class="icon feather icon-clock m-r-10"></i>30 min
+                                            </span>
+                                        </p>
+                                        <p class="small">Le transport de demain est reporté de 15 min</p>
+                                    </div>
+                                </div>
                             </li>
                             <li class="notification">
                                 <div class="media">
-                                    <img class="img-radius" src="~/images/avatar-default.jpg" alt="User">
+                                    <div class="notification-icon bg-success">
+                                        <i class="feather icon-truck"></i>
+                                    </div>
                                     <div class="media-body">
-                                        <p><strong>Transport #123</strong><span class="n-time text-muted"><i class="icon feather icon-clock m-r-10"></i>5 min</span></p>
-                                        <p>Nouveau transport ajouté</p>
+                                        <p><strong>Bus en route</strong>
+                                            <span class="n-time text-muted">
+                                                <i class="icon feather icon-clock m-r-10"></i>2h
+                                            </span>
+                                        </p>
+                                        <p class="small">Votre bus est parti du dépôt</p>
                                     </div>
                                 </div>
                             </li>
                         </ul>
                         <div class="noti-footer">
-                            <a href="#!">voir tout</a>
+                            <a href="@Url.Action("Index", "Notification")">Voir toutes les notifications</a>
                         </div>
                     </div>
                 </div>
             </li>
             
-            <!-- User Profile -->
+            <!-- User Profile amélioré -->
             <li>
                 <div class="dropdown drp-user">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                        <i class="feather icon-user"></i>
+                        <div class="user-avatar">
+                            <i class="feather icon-user"></i>
+                        </div>
                     </a>
                     <div class="dropdown-menu dropdown-menu-right profile-notification">
                         <div class="pro-head">
-                            <img src="~/images/avatar-default.jpg" class="img-radius" alt="User">
-                            <span>Utilisateur</span>
+                            <div class="profile-avatar">
+                                <i class="feather icon-user"></i>
+                            </div>
+                            <div class="profile-info">
+                                <h6>Jean Dupont</h6>
+                                <span class="text-muted">EMP001</span>
+                            </div>
                             <a href="#!" class="dud-logout" title="Déconnexion">
                                 <i class="feather icon-log-out"></i>
                             </a>
                         </div>
                         <ul class="pro-body">
-                            <li><a href="#!" class="dropdown-item"><i class="feather icon-user"></i> Profil</a></li>
-                            <li><a href="#!" class="dropdown-item"><i class="feather icon-settings"></i> Paramètres</a></li>
-                            <li><a asp-action="Privacy" asp-controller="Home" class="dropdown-item"><i class="feather icon-shield"></i> Confidentialité</a></li>
+                            <li>
+                                <a asp-controller="Compte" asp-action="MonProfil" class="dropdown-item">
+                                    <i class="feather icon-user"></i> Mon Profil
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="Compte" asp-action="Parametres" class="dropdown-item">
+                                    <i class="feather icon-settings"></i> Paramètres
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-action="Privacy" asp-controller="Home" class="dropdown-item">
+                                    <i class="feather icon-shield"></i> Confidentialité
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#!" class="dropdown-item text-danger">
+                                    <i class="feather icon-log-out"></i> Déconnexion
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -84,3 +146,141 @@
         </ul>
     </div>
 </header>
+
+<style>
+    /* Nouveau logo personnalisé */
+    .brand-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #fff;
+        font-weight: 600;
+        font-size: 18px;
+    }
+    
+    .brand-logo i {
+        font-size: 24px;
+        background: rgba(255, 255, 255, 0.2);
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .brand-text {
+        display: inline-block;
+    }
+    
+    /* Avatar utilisateur dans le header */
+    .user-avatar {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+    }
+    
+    .user-avatar i {
+        font-size: 18px;
+    }
+    
+    /* Badge de notification */
+    .notification-count {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        font-size: 10px;
+        padding: 2px 5px;
+    }
+    
+    /* Icône dans les notifications */
+    .notification-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        color: #fff;
+    }
+    
+    .notification.unread {
+        background: #f8f9fa;
+    }
+    
+    /* Amélioration du dropdown profil */
+    .pro-head {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .profile-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+    }
+    
+    .profile-avatar i {
+        font-size: 24px;
+        color: #fff;
+    }
+    
+    .profile-info {
+        flex: 1;
+    }
+    
+    .profile-info h6 {
+        color: #fff;
+        margin: 0;
+        font-weight: 600;
+    }
+    
+    .dud-logout {
+        color: #fff;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+    }
+    
+    .dud-logout:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+    
+    /* Style des items du menu profil */
+    .pro-body li a {
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s;
+    }
+    
+    .pro-body li a:hover {
+        background: #f8f9fa;
+        padding-left: 25px;
+    }
+    
+    .pro-body li a.text-danger:hover {
+        background: #fff5f5;
+    }
+</style>

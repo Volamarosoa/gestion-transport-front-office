@@ -1,0 +1,181 @@
+@model PaginatedViewModel<AffectationModel>
+
+<div class="card table-card">
+    <div class="card-header">
+        <h5>Dernières affectations</h5>
+        <div class="card-header-right d-flex align-items-center">
+            <!-- Sélecteur de taille de page -->
+            <select name="pageSize" class="form-control form-control-sm mr-2" style="width: auto;">
+                <option value="10" selected="@(Model.PageSize == 10)">10 par page</option>
+                <option value="25" selected="@(Model.PageSize == 25)">25 par page</option>
+                <option value="50" selected="@(Model.PageSize == 50)">50 par page</option>
+            </select>
+
+            <div class="btn-group card-option">
+                <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="feather icon-more-horizontal"></i>
+                </button>
+                <ul class="list-unstyled card-option dropdown-menu dropdown-menu-right">
+                    <li class="dropdown-item full-card"><a href="#!"><span><i class="feather icon-maximize"></i> maximiser</span></a></li>
+                    <li class="dropdown-item minimize-card"><a href="#!"><span><i class="feather icon-minus"></i> réduire</span></a></li>
+                    <li class="dropdown-item reload-card"><a href="@Url.Action("Index")"><i class="feather icon-refresh-cw"></i> recharger</a></li>
+                </ul>
+            </div>
+
+            <a href="@Url.Action("ExportPdf", "Home")" 
+                class="btn btn-danger btn-sm mr-2" 
+                title="Exporter en PDF">
+                <i class="feather icon-download"></i> Export PDF
+            </a>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <!-- Info pagination en haut -->
+        <div class="p-3 border-bottom bg-light">
+            <div class="row align-items-center">
+                <div class="col-sm-6">
+                    <p class="mb-0 text-muted">
+                        Affichage de <strong>@Model.StartItem</strong> à <strong>@Model.EndItem</strong> 
+                        sur <strong>@Model.TotalItems</strong> affectations
+                    </p>
+                </div>
+                <div class="col-sm-6 text-right">
+                    <span class="badge badge-primary">Page @Model.CurrentPage sur @Model.TotalPages</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Employé</th>
+                        <th>Site / Adresse</th>
+                        <th>Date & Heure</th>
+                        <th>Type</th>
+                        <th>Véhicule</th>
+                        <th>Statut</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var affectation in Model.Items)
+                    {
+                        var statutInfo = affectation.GetStatut();
+                        var statutColor = affectation.EstValidee == true ? "success" : 
+                                            affectation.EstValidee == false ? "danger" : "warning";
+                        
+                        <tr>
+                            <td><strong>#@affectation.Id.ToString("D3")</strong></td>
+                            <td>
+                                <div class="d-inline-block align-middle">
+                                    <div class="d-inline-block">
+                                        <h6 class="mb-0">@affectation.Employe?.NomComplet()</h6>
+                                        <p class="text-muted m-b-0 small">@affectation.Employe?.Matricule</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <strong>@affectation.Site?.Nom</strong><br />
+                                <small class="text-muted">@affectation.Adresse?.Adresse</small>
+                            </td>
+                            <td>
+                                <div>@affectation.DateTransport?.FormatDate()</div>
+                                <small class="text-primary"><i class="feather icon-clock"></i> @affectation.HeureTransport?.FormatHeure() - @affectation.HeureTransport?.Libelle</small>
+                            </td>
+                            <td>
+                                <span class="badge badge-light-@(affectation.TypeTransport?.EstAller() == true ? "info" : "secondary")">
+                                    <i class="feather icon-@(affectation.TypeTransport?.EstAller() == true ? "arrow-right" : "arrow-left")"></i>
+                                    @affectation.TypeTransport?.Libelle
+                                </span>
+                            </td>
+                            <td>
+                                @if (affectation.Vehicule != null)
+                                {
+                                    <span class="badge badge-light-primary">@affectation.Vehicule.Matricule</span><br />
+                                    <small class="text-muted"><i class="feather icon-users"></i> @affectation.Vehicule.NombrePlaces places</small>
+                                }
+                                else
+                                {
+                                    <span class="text-muted"><i>Non affecté</i></span>
+                                }
+                            </td>
+                            <td>
+                                <label class="badge badge-@statutColor">@statutInfo</label>
+                                @if (affectation.EstArchive)
+                                {
+                                    <br /><small class="text-muted"><i class="feather icon-archive"></i> Archivé</small>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <a href="#!" class="btn btn-sm btn-icon btn-primary" title="Voir détails">
+                                    <i class="feather icon-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="p-3 border-top bg-light">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-end mb-0">
+                    <!-- Bouton Previous -->
+                    <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                        <a class="page-link" 
+                            href="@(!Model.HasPreviousPage ? "#" : Url.Action("Index", new { page = Model.CurrentPage - 1, pageSize = Model.PageSize }))" 
+                            aria-label="Previous">
+                            <span aria-hidden="true">&laquo; Précédent</span>
+                        </a>
+                    </li>
+
+                    <!-- Première page si nécessaire -->
+                    @if (Model.GetPageNumbers().First() > 1)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Url.Action("Index", new { page = 1, pageSize = Model.PageSize })">1</a>
+                        </li>
+                        @if (Model.GetPageNumbers().First() > 2)
+                        {
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        }
+                    }
+
+                    <!-- Numéros de page -->
+                    @foreach (var pageNumber in Model.GetPageNumbers())
+                    {
+                        <li class="page-item @(pageNumber == Model.CurrentPage ? "active" : "")">
+                            <a class="page-link" href="@Url.Action("Index", new { page = pageNumber, pageSize = Model.PageSize })">
+                                @pageNumber
+                            </a>
+                        </li>
+                    }
+
+                    <!-- Dernière page si nécessaire -->
+                    @if (Model.GetPageNumbers().Last() < Model.TotalPages)
+                    {
+                        @if (Model.GetPageNumbers().Last() < Model.TotalPages - 1)
+                        {
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        }
+                        <li class="page-item">
+                            <a class="page-link" href="@Url.Action("Index", new { page = Model.TotalPages, pageSize = Model.PageSize })">@Model.TotalPages</a>
+                        </li>
+                    }
+
+                    <!-- Bouton Next -->
+                    <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                        <a class="page-link" 
+                            href="@(!Model.HasNextPage ? "#" : Url.Action("Index", new { page = Model.CurrentPage + 1, pageSize = Model.PageSize }))" 
+                            aria-label="Next">
+                            <span aria-hidden="true">Suivant &raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>

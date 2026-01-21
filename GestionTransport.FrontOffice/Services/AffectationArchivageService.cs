@@ -1,3 +1,5 @@
+using GestionTransport.FrontOffice.Models.Affectation;
+
 namespace GestionTransport.FrontOffice.Services;
 
 public class AffectationArchivageService

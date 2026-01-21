@@ -1,4 +1,4 @@
-using GestionTransport.FrontOffice.Models;
+using GestionTransport.FrontOffice.Models.Transport;
 
 namespace GestionTransport.FrontOffice.Repositories.Interfaces
 {

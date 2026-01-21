@@ -1,3 +1,6 @@
+using GestionTransport.FrontOffice.Models.Employe;
+using GestionTransport.FrontOffice.Models.Transport;
+
 namespace GestionTransport.FrontOffice.Models.Affectation;
 
 public class AffectationModel

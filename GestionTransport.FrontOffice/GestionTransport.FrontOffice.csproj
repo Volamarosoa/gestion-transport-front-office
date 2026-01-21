@@ -8,6 +8,8 @@
 
   <ItemGroup>
     <!-- Entity Framework Core pour SQL Server (remplace System.Data.SqlClient) -->
+    <PackageReference Include="IronPdf" Version="2025.12.2" />
+    <PackageReference Include="IronPdf.Native.Chrome.Windows" Version="2025.12.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>

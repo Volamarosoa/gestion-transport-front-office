@@ -12,6 +12,49 @@
     <!-- Able Pro CSS -->
     <link rel="stylesheet" href="~/css/style.css">
     
+    <!-- Style pour la pagination AJAX -->
+    <style>
+        .ajax-table-container {
+            position: relative;
+            transition: opacity 0.3s ease;
+            padding-right: 0 !important;
+            padding-left: 0 !important;
+        }
+        
+        .ajax-table-container.loading {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        
+        .table-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            border-radius: 8px;
+        }
+        
+        .loader-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4680ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+        }
+    </style>
+    
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
@@ -53,9 +96,7 @@
             </div>
 
             <!-- Page Content -->
-            <div class="row">
-                @RenderBody()
-            </div>
+            @RenderBody()
         </div>
     </div>
 
@@ -64,6 +105,81 @@
     <script src="~/js/plugins/bootstrap.min.js"></script>
     <script src="~/js/ripple.js"></script>
     <script src="~/js/pcoded.min.js"></script>
+    
+    <!-- Script de pagination AJAX réutilisable -->
+    <script>
+        // PAGINATION AJAX RÉUTILISABLE
+        // Fonctionne automatiquement sur tous les conteneurs avec class "ajax-table-container"
+        
+        var AjaxPagination = {
+            init: function() {
+                this.bindEvents();
+            },
+            
+            bindEvents: function() {
+                var self = this;
+                
+                // Délégation d'événement pour les liens de pagination
+                $(document).on('click', '.ajax-table-container .pagination a', function(e) {
+                    e.preventDefault();
+                    var url = $(this).attr('href');
+                    if (!url || url === '#') return;
+                    
+                    var container = $(this).closest('.ajax-table-container');
+                    self.loadPage(url, container);
+                });
+                
+                // Délégation pour le changement de taille de page
+                $(document).on('change', '.ajax-table-container select[name="pageSize"]', function() {
+                    var pageSize = $(this).val();
+                    var container = $(this).closest('.ajax-table-container');
+                    var actionUrl = container.data('action-url') || window.location.pathname;
+                    var url = actionUrl + '?page=1&pageSize=' + pageSize;
+                    
+                    self.loadPage(url, container);
+                });
+            },
+            
+            loadPage: function(url, container) {
+                // Ajouter le loader
+                container.addClass('loading');
+                this.showLoader(container);
+                
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    success: function(response) {
+                        // Remplacer le contenu du container
+                        container.html(response);
+                        
+                        // Smooth scroll vers le tableau
+                        $('html, body').animate({
+                            scrollTop: container.offset().top - 100
+                        }, 400);
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Erreur AJAX:', error);
+                        alert('Erreur lors du chargement des données. Veuillez réessayer.');
+                    },
+                    complete: function() {
+                        container.removeClass('loading');
+                    }
+                });
+            },
+            
+            showLoader: function(container) {
+                if (container.find('.table-overlay').length === 0) {
+                    container.append('<div class="table-overlay"><div class="loader-spinner"></div></div>');
+                }
+            }
+        };
+        
+        // Initialiser au chargement du DOM
+        $(document).ready(function() {
+            AjaxPagination.init();
+        });
+    </script>
     
     @await RenderSectionAsync("Scripts", required: false)
 </body>

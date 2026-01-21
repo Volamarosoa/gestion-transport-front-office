@@ -1,19 +1,19 @@
-using GestionTransport.FrontOffice.Models.Transport;
+using GestionTransport.FrontOffice.Models.Affectation;
 using GestionTransport.FrontOffice.Repositories.Interfaces;
 using GestionTransport.FrontOffice.Services;
 using Microsoft.Data.SqlClient;
 
 namespace GestionTransport.FrontOffice.Repositories
 {
-    public class TypeTransportRepository : BaseRepository<TypeTransportModel>, ITypeTransportRepository
+    public class TypeAffectationRepository : BaseRepository<TypeAffectationModel>, ITypeAffectationRepository
     {
-        protected override string TableName => "TypeTransport";
+        protected override string TableName => "TypeAffectation";
 
-        public TypeTransportRepository(IDatabaseService dbService) : base(dbService) { }
+        public TypeAffectationRepository(IDatabaseService dbService) : base(dbService) { }
 
-        protected override TypeTransportModel MapEntity(SqlDataReader reader)
+        protected override TypeAffectationModel MapEntity(SqlDataReader reader)
         {
-            return new TypeTransportModel
+            return new TypeAffectationModel
             {
                 Id = (int)reader["Id"],
                 Libelle = reader["Libelle"]?.ToString(),
@@ -21,14 +21,14 @@ namespace GestionTransport.FrontOffice.Repositories
             };
         }
 
-        public List<TypeTransportModel> GetAll()
+        public List<TypeAffectationModel> GetAll()
         {
-            var types = new List<TypeTransportModel>();
+            var types = new List<TypeAffectationModel>();
 
             using (var conn = GetConnection())
             {
                 conn.Open();
-                var cmd = new SqlCommand("SELECT * FROM TypeTransport ORDER BY Libelle", conn);
+                var cmd = new SqlCommand("SELECT * FROM TypeAffectation ORDER BY Libelle", conn);
                 var reader = cmd.ExecuteReader();
 
                 while (reader.Read())
@@ -40,12 +40,12 @@ namespace GestionTransport.FrontOffice.Repositories
             return types;
         }
 
-        public TypeTransportModel GetById(int id)
+        public TypeAffectationModel GetById(int id)
         {
             using (var conn = GetConnection())
             {
                 conn.Open();
-                var cmd = new SqlCommand("SELECT * FROM TypeTransport WHERE Id = @Id", conn);
+                var cmd = new SqlCommand("SELECT * FROM TypeAffectation WHERE Id = @Id", conn);
                 AddParameter(cmd, "@Id", id);
                 
                 var reader = cmd.ExecuteReader();
@@ -59,39 +59,39 @@ namespace GestionTransport.FrontOffice.Repositories
             return null;
         }
 
-        public int Create(TypeTransportModel typeTransport)
+        public int Create(TypeAffectationModel typeAffectation)
         {
             using (var conn = GetConnection())
             {
                 conn.Open();
                 var cmd = new SqlCommand(
-                    @"INSERT INTO TypeTransport (Libelle, Actif) 
+                    @"INSERT INTO TypeAffectation (Libelle, Actif) 
                       OUTPUT INSERTED.Id
                       VALUES (@Libelle, @Actif)",
                     conn);
 
-                AddParameter(cmd, "@Libelle", typeTransport.Libelle);
-                AddParameter(cmd, "@Actif", typeTransport.Actif);
+                AddParameter(cmd, "@Libelle", typeAffectation.Libelle);
+                AddParameter(cmd, "@Actif", typeAffectation.Actif);
 
                 return (int)cmd.ExecuteScalar();
             }
         }
 
-        public void Update(TypeTransportModel typeTransport)
+        public void Update(TypeAffectationModel typeAffectation)
         {
             using (var conn = GetConnection())
             {
                 conn.Open();
                 var cmd = new SqlCommand(
-                    @"UPDATE TypeTransport 
+                    @"UPDATE TypeAffectation 
                       SET Libelle = @Libelle,
                           Actif = @Actif
                       WHERE Id = @Id",
                     conn);
 
-                AddParameter(cmd, "@Id", typeTransport.Id);
-                AddParameter(cmd, "@Libelle", typeTransport.Libelle);
-                AddParameter(cmd, "@Actif", typeTransport.Actif);
+                AddParameter(cmd, "@Id", typeAffectation.Id);
+                AddParameter(cmd, "@Libelle", typeAffectation.Libelle);
+                AddParameter(cmd, "@Actif", typeAffectation.Actif);
 
                 cmd.ExecuteNonQuery();
             }
@@ -102,20 +102,20 @@ namespace GestionTransport.FrontOffice.Repositories
             using (var conn = GetConnection())
             {
                 conn.Open();
-                var cmd = new SqlCommand("DELETE FROM TypeTransport WHERE Id = @Id", conn);
+                var cmd = new SqlCommand("DELETE FROM TypeAffectation WHERE Id = @Id", conn);
                 AddParameter(cmd, "@Id", id);
                 cmd.ExecuteNonQuery();
             }
         }
 
-        public List<TypeTransportModel> GetActifs()
+        public List<TypeAffectationModel> GetActifs()
         {
-            var types = new List<TypeTransportModel>();
+            var types = new List<TypeAffectationModel>();
 
             using (var conn = GetConnection())
             {
                 conn.Open();
-                var cmd = new SqlCommand("SELECT * FROM TypeTransport WHERE Actif = 1 ORDER BY Libelle", conn);
+                var cmd = new SqlCommand("SELECT * FROM TypeAffectation WHERE Actif = 1 ORDER BY Libelle", conn);
                 var reader = cmd.ExecuteReader();
 
                 while (reader.Read())
@@ -127,12 +127,12 @@ namespace GestionTransport.FrontOffice.Repositories
             return types;
         }
 
-        public TypeTransportModel GetByLibelle(string libelle)
+        public TypeAffectationModel GetByLibelle(string libelle)
         {
             using (var conn = GetConnection())
             {
                 conn.Open();
-                var cmd = new SqlCommand("SELECT * FROM TypeTransport WHERE Libelle = @Libelle", conn);
+                var cmd = new SqlCommand("SELECT * FROM TypeAffectation WHERE Libelle = @Libelle", conn);
                 AddParameter(cmd, "@Libelle", libelle);
                 
                 var reader = cmd.ExecuteReader();
@@ -152,7 +152,7 @@ namespace GestionTransport.FrontOffice.Repositories
             using (var conn = GetConnection())
             {
                 conn.Open();
-                var cmd = new SqlCommand("UPDATE TypeTransport SET Actif = 1 WHERE Id = @Id", conn);
+                var cmd = new SqlCommand("UPDATE TypeAffectation SET Actif = 1 WHERE Id = @Id", conn);
                 AddParameter(cmd, "@Id", id);
                 cmd.ExecuteNonQuery();
             }
@@ -163,7 +163,7 @@ namespace GestionTransport.FrontOffice.Repositories
             using (var conn = GetConnection())
             {
                 conn.Open();
-                var cmd = new SqlCommand("UPDATE TypeTransport SET Actif = 0 WHERE Id = @Id", conn);
+                var cmd = new SqlCommand("UPDATE TypeAffectation SET Actif = 0 WHERE Id = @Id", conn);
                 AddParameter(cmd, "@Id", id);
                 cmd.ExecuteNonQuery();
             }
