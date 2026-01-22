@@ -171,3 +171,120 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <script>
+        // Fonction générique pour capturer et générer le PDF
+        async function captureToPDF(element, filename) {
+            // Cacher les boutons avant la capture
+            const cardHeaderRight = element.querySelector('.card-header-right');
+            const originalDisplay = cardHeaderRight ? cardHeaderRight.style.display : '';
+            if (cardHeaderRight) {
+                cardHeaderRight.style.display = 'none';
+            }
+
+            try {
+                const canvas = await html2canvas(element, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff'
+                });
+
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = 297;
+                const pageHeight = 210;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                while (heightLeft > 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                pdf.save(filename);
+            } finally {
+                // Restaurer l'affichage
+                if (cardHeaderRight) {
+                    cardHeaderRight.style.display = originalDisplay;
+                }
+            }
+        }
+
+        // Exporter la page courante
+        async function exportCurrentPageToPDF() {
+            const element = document.querySelector('.table-card');
+            const timestamp = new Date().toISOString().slice(0,19).replace(/[:T]/g, '-');
+            await captureToPDF(element, `Affectations_Page_${timestamp}.pdf`);
+        }
+
+        // Exporter toutes les affectations
+        async function exportAllToPDF() {
+            // Afficher un message de chargement
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'pdf-loading';
+            loadingDiv.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: white; padding: 30px; border-radius: 10px; text-align: center;">
+                        <div class="spinner-border text-primary mb-3" role="status"></div>
+                        <h5>Génération du PDF complet en cours...</h5>
+                        <p class="text-muted">Cela peut prendre quelques secondes</p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(loadingDiv);
+
+            try {
+                // Charger toutes les données dans une iframe cachée
+                const iframe = document.createElement('iframe');
+                iframe.style.position = 'absolute';
+                iframe.style.left = '-9999px';
+                iframe.style.width = '1200px';
+                iframe.style.height = '800px';
+                document.body.appendChild(iframe);
+
+                // Charger la page avec toutes les données
+                iframe.src = '@Url.Action("ExportAllView", "Home")';
+
+                // Attendre le chargement
+                await new Promise((resolve) => {
+                    iframe.onload = resolve;
+                });
+
+                // Attendre un peu pour le rendu
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                // Capturer et générer le PDF
+                const element = iframe.contentDocument.querySelector('.table-card');
+                const timestamp = new Date().toISOString().slice(0,19).replace(/[:T]/g, '-');
+                await captureToPDF(element, `Affectations_Completes_${timestamp}.pdf`);
+
+                // Nettoyer
+                document.body.removeChild(iframe);
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur lors de la génération du PDF complet.');
+            } finally {
+                // Retirer le loading
+                document.body.removeChild(loadingDiv);
+            }
+        }
+    </script>
+}

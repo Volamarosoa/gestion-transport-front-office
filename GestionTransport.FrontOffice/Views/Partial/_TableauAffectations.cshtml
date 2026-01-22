@@ -4,12 +4,34 @@
     <div class="card-header">
         <h5>Dernières affectations</h5>
         <div class="card-header-right d-flex align-items-center">
+            <!-- Bouton Export PDF avec JavaScript -->
+            <div class="btn-group mb-2 mr-2">
+                <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Export PDF
+                </button>
+
+                <div class="dropdown-menu">
+                    <a class="dropdown-item" href="#" onclick="exportCurrentPageToPDF(); return false;">
+                        <i class="feather icon-file"></i>
+                        Page courante (@Model.Items.Count éléments)
+                    </a>
+                    <a class="dropdown-item" href="#" onclick="exportAllToPDF(); return false;">
+                        <i class="feather icon-list"></i>
+                        Toutes les affectations (@Model.TotalItems éléments)
+                    </a>
+                </div>
+            </div>
+
+
             <!-- Sélecteur de taille de page -->
-            <select name="pageSize" class="form-control form-control-sm mr-2" style="width: auto;">
-                <option value="10" selected="@(Model.PageSize == 10)">10 par page</option>
-                <option value="25" selected="@(Model.PageSize == 25)">25 par page</option>
-                <option value="50" selected="@(Model.PageSize == 50)">50 par page</option>
-            </select>
+            <form method="get" class="d-inline-block mr-2">
+                <input type="hidden" name="page" value="1" />
+                <select name="pageSize" class="form-control form-control-sm" onchange="this.form.submit()" style="width: auto;">
+                    <option value="10" selected="@(Model.PageSize == 10)">10 par page</option>
+                    <option value="25" selected="@(Model.PageSize == 25)">25 par page</option>
+                    <option value="50" selected="@(Model.PageSize == 50)">50 par page</option>
+                </select>
+            </form>
 
             <div class="btn-group card-option">
                 <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -21,12 +43,6 @@
                     <li class="dropdown-item reload-card"><a href="@Url.Action("Index")"><i class="feather icon-refresh-cw"></i> recharger</a></li>
                 </ul>
             </div>
-
-            <a href="@Url.Action("ExportPdf", "Home")" 
-                class="btn btn-danger btn-sm mr-2" 
-                title="Exporter en PDF">
-                <i class="feather icon-download"></i> Export PDF
-            </a>
         </div>
     </div>
     <div class="card-body p-0">
@@ -179,3 +195,77 @@
         </div>
     </div>
 </div>
+
+<!-- Scripts pour l'export PDF -->
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <script>
+
+        async function exportToPDF() {
+            // Afficher un loader sur le bouton
+            const btn = document.getElementById('exportPdfBtn');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="feather icon-loader"></i> Génération...';
+            btn.disabled = true;
+
+            try {
+                // Sélectionner la carte du tableau
+                const element = document.querySelector('.table-card');
+                
+                // Capturer en image avec html2canvas
+                const canvas = await html2canvas(element, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff'
+                });
+
+                // Créer le PDF
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = 297; // A4 landscape width in mm
+                const pageHeight = 210; // A4 height in mm
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                // Première page
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                // Ajouter des pages supplémentaires si nécessaire
+                while (heightLeft > 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                // Sauvegarder le fichier
+                const timestamp = new Date().toISOString().slice(0,19).replace(/[:T]/g, '-');
+                const filename = `Affectations_${timestamp}.pdf`;
+                pdf.save(filename);
+
+                // Message de succès
+                console.log('PDF généré avec succès !');
+
+            } catch (error) {
+                console.error('Erreur lors de la génération du PDF:', error);
+                alert('Erreur lors de la génération du PDF. Vérifiez la console pour plus de détails.');
+            } finally {
+                // Restaurer le bouton
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            }
+        }
+    </script>
+}

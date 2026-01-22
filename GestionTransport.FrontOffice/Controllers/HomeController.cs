@@ -5,7 +5,6 @@ using GestionTransport.FrontOffice.Models.Affectation;
 using GestionTransport.FrontOffice.Models.Employe;
 using GestionTransport.FrontOffice.Models.Transport;
 using GestionTransport.FrontOffice.Models.Utils;
-using GestionTransport.FrontOffice.Services;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace GestionTransport.FrontOffice.Controllers;
@@ -13,12 +12,10 @@ namespace GestionTransport.FrontOffice.Controllers;
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
-    private readonly PdfExportService _pdfService;
 
-    public HomeController(ILogger<HomeController> logger, PdfExportService pdfService)
+    public HomeController(ILogger<HomeController> logger)
     {
         _logger = logger;
-        _pdfService = pdfService;
     }
 
     // Données statiques pour tester (avant de connecter la BDD)
@@ -172,64 +169,22 @@ public class HomeController : Controller
         return View(model);
     }
 
-    public async Task<IActionResult> ExportPdf(int page = 1, int pageSize = 50)
+    // Action pour exporter TOUTES les affectations (pour le PDF complet)
+    public IActionResult ExportAllView()
     {
         var allAffectations = GetStaticAffectations();
 
-        // Option : exporter toutes les affectations
-        var totalItems = allAffectations.Count;
-        
-        var affectations = allAffectations
-            .OrderByDescending(a => a.DateCreation)
-            .Take(pageSize) // Limiter à 50 pour ne pas surcharger
-            .ToList();
-
         var model = new PaginatedViewModel<AffectationModel>
         {
-            Items = affectations,
+            Items = allAffectations.OrderByDescending(a => a.DateCreation).ToList(),
             CurrentPage = 1,
-            PageSize = affectations.Count,
-            TotalItems = totalItems,
+            PageSize = allAffectations.Count,
+            TotalItems = allAffectations.Count,
             TotalPages = 1
         };
 
-        // Rendre la vue en HTML
-        var htmlContent = await RenderViewToStringAsync("ExportPdfView", model);
-
-        // Générer le PDF avec IronPDF
-        var pdfBytes = _pdfService.GeneratePdfFromHtml(htmlContent);
-
-        var fileName = $"Affectations_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
-        return File(pdfBytes, "application/pdf", fileName);
-    }
-
-    // Méthode helper pour convertir une vue en string
-    private async Task<string> RenderViewToStringAsync(string viewName, object model)
-    {
-        ViewData.Model = model;
-        
-        using (var writer = new StringWriter())
-        {
-            var viewEngine = HttpContext.RequestServices.GetService(typeof(Microsoft.AspNetCore.Mvc.ViewEngines.ICompositeViewEngine)) as Microsoft.AspNetCore.Mvc.ViewEngines.ICompositeViewEngine;
-            var viewResult = viewEngine?.FindView(ControllerContext, viewName, false);
-
-            if (viewResult?.View == null)
-            {
-                throw new ArgumentNullException($"Unable to find view '{viewName}'");
-            }
-
-            var viewContext = new ViewContext(
-                ControllerContext,
-                viewResult.View,
-                ViewData,
-                TempData,
-                writer,
-                new Microsoft.AspNetCore.Mvc.ViewFeatures.HtmlHelperOptions()
-            );
-
-            await viewResult.View.RenderAsync(viewContext);
-            return writer.ToString();
-        }
+        // Retourner la même vue partielle mais avec TOUTES les données
+        return PartialView("../Partial/_TableauAffectations", model);
     }
 
     // Réserver un transport
