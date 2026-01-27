@@ -1,0 +1,103 @@
+@using GestionTransport.FrontOffice.Models.Utils
+
+@model CsvStructure
+@{
+    ViewData["Title"] = "Mapper les colonnes";
+}
+
+<div class="row">
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="feather icon-map"></i> Associer les colonnes du CSV</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="feather icon-info"></i> 
+                    <strong>Fichier détecté :</strong> @Model.RowCount ligne(s) trouvée(s) avec @Model.Columns.Count colonne(s)
+                </div>
+
+                <!-- Aperçu des données -->
+                <h6 class="mb-3"><i class="feather icon-eye"></i> Aperçu des premières lignes :</h6>
+                <div class="table-responsive mb-4" style="max-height: 300px; overflow-y: auto;">
+                    <table class="table table-bordered table-sm table-striped">
+                        <thead class="thead-dark">
+                            <tr>
+                                @foreach (var col in Model.Columns)
+                                {
+                                    <th>@col</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.SampleData)
+                            {
+                                <tr>
+                                    @foreach (var col in Model.Columns)
+                                    {
+                                        <td>@row[col]</td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <hr class="my-4" />
+
+                <!-- Formulaire de mapping -->
+                <form method="post" asp-action="ProcessCsvImport">
+                    <input type="hidden" name="tempFileName" value="@ViewBag.TempFileName" />
+
+                    <h6 class="mb-3"><i class="feather icon-link"></i> Associer chaque colonne CSV à un champ :</h6>
+                    
+                    <div class="row">
+                        @foreach (var column in Model.Columns)
+                        {
+                            <div class="col-md-6 mb-3">
+                                <div class="card border-primary">
+                                    <div class="card-body">
+                                        <label class="font-weight-bold text-primary">
+                                            📄 Colonne CSV : "<strong>@column</strong>"
+                                        </label>
+                                        <select name="columnMapping[@column]" class="form-control form-control-lg">
+                                            <option value="">-- Ignorer cette colonne --</option>
+                                            <optgroup label="Informations principales">
+                                                <option value="IdEmploye">👤 IdEmploye (ID de l'employé)</option>
+                                                <option value="IdSite">🏢 IdSite (ID du site)</option>
+                                                <option value="IdAdresse">📍 IdAdresse (ID de l'adresse)</option>
+                                            </optgroup>
+                                            <optgroup label="Transport">
+                                                <option value="IdTypeTransport">🚗 IdTypeTransport (Aller/Retour)</option>
+                                                <option value="IdHeureTransport">🕐 IdHeureTransport (Heure)</option>
+                                                <option value="IdVehicule">🚙 IdVehicule (Véhicule)</option>
+                                            </optgroup>
+                                            <optgroup label="Autres">
+                                                <option value="Commentaire">💬 Commentaire</option>
+                                                <option value="EstValidee">✅ EstValidee (Validé oui/non)</option>
+                                            </optgroup>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="feather icon-alert-triangle"></i>
+                        <strong>Note :</strong> Les colonnes non associées seront ignorées lors de l'import.
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="feather icon-check"></i> Importer les données
+                        </button>
+                        <a href="@Url.Action("ImportCsv")" class="btn btn-secondary btn-lg ml-2">
+                            <i class="feather icon-arrow-left"></i> Retour
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

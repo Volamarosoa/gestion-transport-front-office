@@ -1,0 +1,62 @@
+@{
+    ViewData["Title"] = "Résultat de l'import";
+}
+
+<div class="row">
+    <div class="col-xl-10 offset-xl-1">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5><i class="feather icon-check-circle"></i> Résultat de l'import CSV</h5>
+            </div>
+            <div class="card-body">
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success">
+                        <h5><i class="feather icon-check-circle"></i> @TempData["Success"]</h5>
+                    </div>
+                }
+
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger">
+                        <h5><i class="feather icon-alert-circle"></i> @TempData["Error"]</h5>
+                    </div>
+                }
+
+                @if (TempData["ImportedData"] != null)
+                {
+                    <div class="card">
+                        <div class="card-header">
+                            <h6><i class="feather icon-list"></i> Données importées :</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="imported-data">
+                                @Html.Raw(TempData["ImportedData"])
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <div class="text-center mt-4">
+                    <a href="@Url.Action("Index")" class="btn btn-primary btn-lg">
+                        <i class="feather icon-home"></i> Retour au tableau de bord
+                    </a>
+                    <a href="@Url.Action("ImportCsv")" class="btn btn-success btn-lg ml-2">
+                        <i class="feather icon-upload"></i> Importer un autre fichier
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .imported-data {
+        font-family: 'Courier New', monospace;
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+</style>

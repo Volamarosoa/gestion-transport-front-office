@@ -7,15 +7,20 @@ using GestionTransport.FrontOffice.Models.Transport;
 using GestionTransport.FrontOffice.Models.Utils;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
+using System.Data;
+using GestionTransport.FrontOffice.Services;
+
 namespace GestionTransport.FrontOffice.Controllers;
 
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
+    private readonly CsvImportService _csvImportService; 
 
-    public HomeController(ILogger<HomeController> logger)
+    public HomeController(ILogger<HomeController> logger, CsvImportService csvImport)
     {
         _logger = logger;
+        _csvImportService = csvImport;
     }
 
     // Données statiques pour tester (avant de connecter la BDD)
@@ -185,6 +190,123 @@ public class HomeController : Controller
 
         // Retourner la même vue partielle mais avec TOUTES les données
         return PartialView("../Partial/_TableauAffectations", model);
+    }
+
+    public IActionResult ImportCsv()
+    {
+        return View();
+    }
+
+    // ⭐ ACTION 2 : Télécharger un exemple de CSV
+    public IActionResult DownloadCsvTemplate()
+    {
+        var csvBytes = _csvImportService.GenerateExampleTemplate();
+        return File(csvBytes, "text/csv", "Exemple_Affectations.csv");
+    }
+
+    // ⭐ ACTION 3 : Analyser le CSV uploadé
+    [HttpPost]
+    public async Task<IActionResult> AnalyzeCsv(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+        {
+            TempData["Error"] = "Veuillez sélectionner un fichier CSV.";
+            return RedirectToAction("ImportCsv");
+        }
+
+        if (!file.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            TempData["Error"] = "Le fichier doit être au format CSV.";
+            return RedirectToAction("ImportCsv");
+        }
+
+        try
+        {
+            using (var stream = file.OpenReadStream())
+            {
+                var structure = _csvImportService.AnalyzeCsv(stream, ";");
+                
+                // Sauvegarder le fichier temporairement
+                var tempFileName = $"{Guid.NewGuid()}.csv";
+                var tempPath = Path.Combine(Path.GetTempPath(), tempFileName);
+                
+                using (var fileStream = new FileStream(tempPath, FileMode.Create))
+                {
+                    await file.CopyToAsync(fileStream);
+                }
+
+                ViewBag.TempFileName = tempFileName;
+                
+                return View("MapCsvColumns", structure);
+            }
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = $"Erreur lors de l'analyse : {ex.Message}";
+            return RedirectToAction("ImportCsv");
+        }
+    }
+
+    // ⭐ ACTION 4 : Traiter l'import avec le mapping
+    [HttpPost]
+    public IActionResult ProcessCsvImport(string tempFileName, Dictionary<string, string> columnMapping)
+    {
+        try
+        {
+            var tempPath = Path.Combine(Path.GetTempPath(), tempFileName);
+            
+            if (!System.IO.File.Exists(tempPath))
+            {
+                TempData["Error"] = "Fichier temporaire introuvable.";
+                return RedirectToAction("ImportCsv");
+            }
+
+            using (var stream = new FileStream(tempPath, FileMode.Open))
+            {
+                var dataTable = _csvImportService.ReadCsvToDataTable(stream, ";");
+                
+                var importedCount = 0;
+                var importedData = new List<string>();
+
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    var rowData = new List<string>();
+                    
+                    foreach (var mapping in columnMapping)
+                    {
+                        var csvColumn = mapping.Key;
+                        var targetField = mapping.Value;
+                        
+                        if (!string.IsNullOrEmpty(targetField))
+                        {
+                            var value = row[csvColumn].ToString();
+                            rowData.Add($"{targetField}: {value}");
+                        }
+                    }
+                    
+                    importedData.Add($"Ligne {importedCount + 1}: {string.Join(", ", rowData)}");
+                    importedCount++;
+                }
+
+                // Nettoyer le fichier temporaire
+                System.IO.File.Delete(tempPath);
+
+                TempData["Success"] = $"✅ {importedCount} ligne(s) importée(s) avec succès !";
+                TempData["ImportedData"] = string.Join("<br/>", importedData);
+            }
+        }
+        catch (Exception ex)
+        {
+            TempData["Error"] = $"Erreur lors de l'import : {ex.Message}";
+        }
+
+        return RedirectToAction("ImportResult");
+    }
+
+    // ⭐ ACTION 5 : Afficher le résultat de l'import
+    public IActionResult ImportResult()
+    {
+        return View();
     }
 
     // Réserver un transport

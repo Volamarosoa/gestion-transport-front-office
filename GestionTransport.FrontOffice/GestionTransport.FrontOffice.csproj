@@ -23,7 +23,7 @@
     <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.5" />
 
     <!-- Pour l'export CSV -->
-    <PackageReference Include="CsvHelper" Version="30.0.1" />
+    <PackageReference Include="CsvHelper" Version="33.1.0" />
   </ItemGroup>
 
 </Project>

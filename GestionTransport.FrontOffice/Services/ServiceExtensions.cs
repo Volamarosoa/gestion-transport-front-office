@@ -30,6 +30,7 @@ namespace GestionTransport.FrontOffice.Services
         public static IServiceCollection AddBusinessServices(this IServiceCollection services)
         {
             services.AddScoped<AffectationArchivageService>();
+            services.AddScoped<CsvImportService>();
             
             return services;
         }
