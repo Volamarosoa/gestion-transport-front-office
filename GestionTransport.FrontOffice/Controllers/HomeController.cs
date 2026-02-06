@@ -291,7 +291,7 @@ public class HomeController : Controller
                 // Nettoyer le fichier temporaire
                 System.IO.File.Delete(tempPath);
 
-                TempData["Success"] = $"✅ {importedCount} ligne(s) importée(s) avec succès !";
+                TempData["Success"] = $"{importedCount} ligne(s) importée(s) avec succès !";
                 TempData["ImportedData"] = string.Join("<br/>", importedData);
             }
         }
