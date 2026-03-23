@@ -9,18 +9,49 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 using System.Data;
 using GestionTransport.FrontOffice.Services;
+using GestionTransport.FrontOffice.Models.Utils;
+using GestionTransport.FrontOffice.Repositories.Interfaces;
 
 namespace GestionTransport.FrontOffice.Controllers;
 
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
-    private readonly CsvImportService _csvImportService; 
+    private readonly CsvImportService _csvImportService;
+    private readonly IAffectationRepository _affectationRepository;
+    private readonly IEmployeRepository _employeRepository;
+    private readonly IAdresseEmployeRepository _adresseEmployeRepository;
+    private readonly ITypeTransportRepository _typeTransportRepository;
+    private readonly ISiteRepository _siteRepository;
+    private readonly IVehiculeRepository _vehiculeRepository;
+    private readonly IHeureTransportRepository _heureTransportRepository;
+    private readonly IDateTransportRepository _dateTransportRepository;
+    private readonly ITypeAffectationRepository _typeAffectationRepository;
 
-    public HomeController(ILogger<HomeController> logger, CsvImportService csvImport)
+    public HomeController(
+        ILogger<HomeController> logger,
+        CsvImportService csvImport,
+        IAffectationRepository affectationRepository,
+        IEmployeRepository employeRepository,
+        IAdresseEmployeRepository adresseEmployeRepository,
+        ITypeTransportRepository typeTransportRepository,
+        ISiteRepository siteRepository,
+        IVehiculeRepository vehiculeRepository,
+        IHeureTransportRepository heureTransportRepository,
+        IDateTransportRepository dateTransportRepository,
+        ITypeAffectationRepository typeAffectationRepository)
     {
         _logger = logger;
         _csvImportService = csvImport;
+        _affectationRepository = affectationRepository;
+        _employeRepository = employeRepository;
+        _adresseEmployeRepository = adresseEmployeRepository;
+        _typeTransportRepository = typeTransportRepository;
+        _siteRepository = siteRepository;
+        _vehiculeRepository = vehiculeRepository;
+        _heureTransportRepository = heureTransportRepository;
+        _dateTransportRepository = dateTransportRepository;
+        _typeAffectationRepository = typeAffectationRepository;
     }
 
     // Données statiques pour tester (avant de connecter la BDD)
@@ -123,16 +154,99 @@ public class HomeController : Controller
         return affectations;
     }
 
+    private List<AffectationModel> LoadAffectationsAvecNavigation()
+    {
+        var affectations = _affectationRepository.GetAll();
+
+        // Préparer les référentiels pour hydrater les propriétés de navigation
+        var employes = _employeRepository.GetAll().ToDictionary(e => e.Id);
+        var adresses = _adresseEmployeRepository.GetAll().ToDictionary(a => a.Id);
+        var typesTransport = _typeTransportRepository.GetAll().ToDictionary(t => t.Id);
+        var sites = _siteRepository.GetAll().ToDictionary(s => s.Id);
+        var vehicules = _vehiculeRepository.GetAll().ToDictionary(v => v.Id);
+        var heures = _heureTransportRepository.GetAll().ToDictionary(h => h.Id);
+        var dates = _dateTransportRepository.GetAll().ToDictionary(d => d.Id);
+        var typesAffectation = _typeAffectationRepository.GetAll().ToDictionary(t => t.Id);
+
+        foreach (var affectation in affectations)
+        {
+            if (employes.TryGetValue(affectation.IdEmploye, out var employe))
+                affectation.Employe = employe;
+
+            if (adresses.TryGetValue(affectation.IdAdresse, out var adresse))
+                affectation.Adresse = adresse;
+
+            if (typesTransport.TryGetValue(affectation.IdTypeTransport, out var typeTransport))
+                affectation.TypeTransport = typeTransport;
+
+            if (sites.TryGetValue(affectation.IdSite, out var site))
+                affectation.Site = site;
+
+            if (affectation.IdVehicule.HasValue && vehicules.TryGetValue(affectation.IdVehicule.Value, out var vehicule))
+                affectation.Vehicule = vehicule;
+
+            if (heures.TryGetValue(affectation.IdHeureTransport, out var heure))
+                affectation.HeureTransport = heure;
+
+            if (dates.TryGetValue(affectation.IdDate, out var date))
+                affectation.DateTransport = date;
+
+            if (typesAffectation.TryGetValue(affectation.IdType, out var typeAffectation))
+                affectation.TypeAffectation = typeAffectation;
+        }
+
+        return affectations;
+    }
+
+    private List<VehiculeJourViewModel> BuildListeJourParVehicule()
+    {
+        var aujourdHui = DateTime.Today;
+        var affectationsDuJour = LoadAffectationsAvecNavigation()
+            .Where(a => a.DateTransport?.DateJour.Date == aujourdHui)
+            .ToList();
+
+        var groupes = affectationsDuJour
+            .GroupBy(a => a.Vehicule?.Id)
+            .Select(g =>
+            {
+                var vehicule = g.First().Vehicule;
+                return new VehiculeJourViewModel
+                {
+                    VehiculeId = vehicule?.Id,
+                    VehiculeLabel = vehicule?.Matricule ?? "Aucun véhicule assigné",
+                    NombrePlaces = vehicule?.NombrePlaces,
+                    Employes = g
+                        .OrderBy(a => a.HeureTransport?.Heure)
+                        .Select(a => new EmployeTransportItemViewModel
+                        {
+                            NomComplet = a.Employe?.NomComplet() ?? "(Employé)",
+                            Matricule = a.Employe?.Matricule,
+                            Adresse = a.Adresse?.Adresse,
+                            Site = a.Site?.Nom,
+                            TypeTransport = a.TypeTransport?.Libelle,
+                            Heure = a.HeureTransport?.FormatHeure(),
+                            Commentaire = a.Commentaire
+                        })
+                        .ToList()
+                };
+            })
+            .OrderBy(v => v.VehiculeLabel)
+            .ToList();
+
+        return groupes;
+    }
+
+
     public IActionResult Index(int page = 1, int pageSize = 10)
     {
-        var allAffectations = GetStaticAffectations();
+        var allAffectations = LoadAffectationsAvecNavigation();
 
         // Calculer la pagination
         var totalItems = allAffectations.Count;
         var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
-        
+
         // Valider la page
-        page = Math.Max(1, Math.Min(page, totalPages));
+        page = Math.Max(1, totalPages == 0 ? 1 : Math.Min(page, totalPages));
 
         // Récupérer les éléments de la page courante
         var affectations = allAffectations
@@ -152,16 +266,16 @@ public class HomeController : Controller
         };
 
         // Statistiques du tableau de bord (calculées depuis les données)
-        ViewBag.TransportsAujourdhui = allAffectations.Count(a => 
+        ViewBag.TransportsAujourdhui = allAffectations.Count(a =>
             a.DateTransport?.DateJour.Date == DateTime.Today);
-        ViewBag.EnCours = allAffectations.Count(a => 
-            a.EstValidee == true && !a.EstArchive && 
+        ViewBag.EnCours = allAffectations.Count(a =>
+            a.EstValidee == true && !a.EstArchive &&
             a.DateTransport?.DateJour.Date == DateTime.Today);
-        ViewBag.Termines = allAffectations.Count(a => 
-            a.EstValidee == true && 
+        ViewBag.Termines = allAffectations.Count(a =>
+            a.EstValidee == true &&
             a.DateTransport?.DateJour.Date < DateTime.Today);
         ViewBag.Annules = allAffectations.Count(a => a.EstValidee == false);
-        ViewBag.EnAttente = allAffectations.Count(a => 
+        ViewBag.EnAttente = allAffectations.Count(a =>
             a.EstValidee == null && !a.EstArchive);
         ViewBag.ClientsActifs = allAffectations.Select(a => a.IdEmploye).Distinct().Count();
 
@@ -177,7 +291,7 @@ public class HomeController : Controller
     // Action pour exporter TOUTES les affectations (pour le PDF complet)
     public IActionResult ExportAllView()
     {
-        var allAffectations = GetStaticAffectations();
+        var allAffectations = LoadAffectationsAvecNavigation();
 
         var model = new PaginatedViewModel<AffectationModel>
         {
@@ -190,6 +304,18 @@ public class HomeController : Controller
 
         // Retourner la même vue partielle mais avec TOUTES les données
         return PartialView("../Partial/_TableauAffectations", model);
+    }
+
+    public IActionResult Bienvenue()
+    {
+        var model = BuildListeJourParVehicule();
+        return View(model);
+    }
+
+    public IActionResult ExportJourPdf()
+    {
+        var model = BuildListeJourParVehicule();
+        return View(model);
     }
 
     public IActionResult ImportCsv()
@@ -213,6 +339,7 @@ public class HomeController : Controller
             TempData["Error"] = "Veuillez sélectionner un fichier CSV.";
             return RedirectToAction("ImportCsv");
         }
+
 
         if (!file.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
         {
@@ -329,24 +456,6 @@ public class HomeController : Controller
 
     // Historique des transports
     public IActionResult Historique()
-    {
-        return View();
-    }
-
-    // Profil du client
-    public IActionResult MonProfil()
-    {
-        return View();
-    }
-
-    // Facturation et paiements
-    public IActionResult Facturation()
-    {
-        return View();
-    }
-
-    // Support client
-    public IActionResult Support()
     {
         return View();
     }

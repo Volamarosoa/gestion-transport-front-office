@@ -90,16 +90,16 @@
                                             <strong>Adresse #@adresse.Id</strong>
                                         </div>
                                         <small class="text-muted d-block">
-                                            <i class="bi bi-geo-alt-fill"></i> @adresse.Adresse
+                                            <i class="feather icon-home"></i> @adresse.Adresse
                                         </small>
                                         <small class="text-muted">
-                                            <i class="bi bi-calendar3"></i> @adresse.DateInsertion.ToString("dd/MM/yyyy")
+                                            <i class="feather icon-calendar"></i> @adresse.DateInsertion.ToString("dd/MM/yyyy")
                                         </small>
                                     </div>
                                     <button class="btn btn-sm btn-outline-danger ms-2" 
                                             onclick="supprimerAdresse(@adresse.Id); event.stopPropagation();"
                                             title="Supprimer">
-                                        <i class="bi bi-trash"></i>
+                                        <i class="feather icon-trash-2"></i>
                                     </button>
                                 </div>
                             </div>
@@ -129,7 +129,7 @@
                                 <div>
                                     <strong class="d-block mb-1">@site.Nom</strong>
                                     <small class="text-muted d-block">
-                                        <i class="bi bi-geo-alt"></i> @site.Adresse
+                                        <i class="feather icon-navigation"></i> @site.Adresse
                                     </small>
                                 </div>
                                 <span class="badge bg-secondary badge-type">@site.GetTypeSite()</span>
@@ -149,6 +149,10 @@
                         <span style="display: inline-block; width: 12px; height: 12px; background: #0d6efd; border-radius: 50%; margin-right: 8px;"></span>
                         <small>Mes adresses</small>
                     </div>
+                    <div class="mb-2">
+                        <span style="display: inline-block; width: 12px; height: 12px; background: #ff0000; border-radius: 50%; margin-right: 8px;"></span>
+                        <small>Sièges</small>
+                    </div>
                     <div>
                         <span style="display: inline-block; width: 12px; height: 12px; background: #ffc107; border-radius: 50%; margin-right: 8px;"></span>
                         <small>Sites entreprise</small>
@@ -162,10 +166,10 @@
             <div class="position-absolute top-0 end-0 m-3" style="z-index: 1000;">
                 <div class="btn-group shadow">
                     <button class="btn btn-light" onclick="showAllMarkers()" title="Tout afficher">
-                        <i class="bi bi-arrows-fullscreen"></i> Tout afficher
+                        <i class="feather icon-maximize"></i> Tout afficher
                     </button>
                     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAddressModal">
-                        <i class="bi bi-plus-circle"></i> Ajouter une adresse
+                        <i class="feather icon-plus-circle"></i> Ajouter une adresse
                     </button>
                 </div>
             </div>
@@ -182,13 +186,13 @@
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title">
-                    <i class="bi bi-plus-circle"></i> Ajouter une nouvelle adresse
+                    <i class="feather icon-plus-square"></i> Ajouter une nouvelle adresse
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i> Cliquez sur la carte pour sélectionner votre adresse ou utilisez la recherche
+                    <i class="feather icon-info"></i> Cliquez sur la carte pour sélectionner votre adresse ou utilisez la recherche
                 </div>
                 
                 <div class="mb-3">
@@ -197,7 +201,7 @@
                         <input type="text" class="form-control" id="searchAddressInput" 
                                placeholder="Ex: Analakely, Antananarivo">
                         <button class="btn btn-primary" onclick="searchNewAddress()">
-                            <i class="bi bi-search"></i>
+                            <i class="feather icon-search"></i>
                         </button>
                     </div>
                 </div>
@@ -221,10 +225,10 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="bi bi-x-circle"></i> Annuler
+                    <i class="feather icon-x-circle"></i> Annuler
                 </button>
                 <button type="button" class="btn btn-primary" onclick="confirmerAjoutAdresse()">
-                    <i class="bi bi-check-circle"></i> Ajouter l'adresse
+                    <i class="feather icon-check-circle"></i> Ajouter l'adresse
                 </button>
             </div>
         </div>
@@ -244,9 +248,25 @@
     let miniMarker;
     let addressMarkers = [];
     let siteMarkers = [];
+    let routeLine;
 
     const mesAdresses = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(mesAdresses));
     const sites = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(sites));
+
+    const normalizeAdresse = (a) => ({
+        latitude: a?.Latitude ?? a?.latitude,
+        longitude: a?.Longitude ?? a?.longitude,
+        adresse: a?.Adresse ?? a?.adresse,
+        estPrincipale: a?.EstPrincipale ?? a?.estPrincipale,
+        dateInsertion: a?.DateInsertion ?? a?.dateInsertion
+    });
+
+    const normalizeSite = (s) => ({
+        latitude: s?.Latitude ?? s?.latitude,
+        longitude: s?.Longitude ?? s?.longitude,
+        nom: s?.Nom ?? s?.nom,
+        adresse: s?.Adresse ?? s?.adresse
+    });
 
     // Custom icons
     const adresseIcon = L.icon({
@@ -267,6 +287,16 @@
         shadowSize: [41, 41]
     });
 
+    // Icône dédiée pour les sites "Siège" (rouge bien visible)
+    const siegeIcon = L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [30, 48],
+        iconAnchor: [15, 48],
+        popupAnchor: [1, -40],
+        shadowSize: [41, 41]
+    });
+
     // Initialize main map
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize main map
@@ -279,7 +309,7 @@
 
         // Add addresses to map
         if (mesAdresses && mesAdresses.length > 0) {
-            mesAdresses.forEach(addr => {
+            mesAdresses.map(normalizeAdresse).forEach(addr => {
                 if (addr.latitude && addr.longitude) {
                     const marker = L.marker([addr.latitude, addr.longitude], {icon: adresseIcon})
                         .addTo(map)
@@ -291,9 +321,10 @@
 
         // Add sites to map
         if (sites && sites.length > 0) {
-            sites.forEach(site => {
+            sites.map(normalizeSite).forEach(site => {
                 if (site.latitude && site.longitude) {
-                    const marker = L.marker([site.latitude, site.longitude], {icon: siteIcon})
+                    const isSiege = getTypeSite(site.nom) === 'Siège';
+                    const marker = L.marker([site.latitude, site.longitude], {icon: isSiege ? siegeIcon : siteIcon})
                         .addTo(map)
                         .bindPopup(createSitePopup(site));
                     siteMarkers.push(marker);
@@ -303,6 +334,7 @@
 
         // Fit bounds to show all markers
         showAllMarkers();
+        drawRoute();
     });
 
     // Initialize mini map in modal
@@ -398,6 +430,28 @@
                 m.openPopup();
             }
         });
+    }
+
+    function drawRoute() {
+        if (routeLine) {
+            map.removeLayer(routeLine);
+        }
+
+        const adressesNorm = mesAdresses.map(normalizeAdresse).filter(a => a.latitude && a.longitude);
+        if (!adressesNorm.length) return;
+
+        const adressePrincipale = adressesNorm.find(a => a.estPrincipale) || adressesNorm[0];
+
+        const sitesNorm = sites.map(normalizeSite).filter(s => s.latitude && s.longitude);
+        const siege = sitesNorm.find(s => getTypeSite(s.nom) === 'Siège') || sitesNorm[0];
+        if (!siege) return;
+
+        const points = [
+            [adressePrincipale.latitude, adressePrincipale.longitude],
+            [siege.latitude, siege.longitude]
+        ];
+
+        routeLine = L.polyline(points, { color: '#ff0000', weight: 5, opacity: 0.85 }).addTo(map);
     }
 
     function showAllMarkers() {

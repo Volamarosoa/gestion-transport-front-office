@@ -1,0 +1,79 @@
+﻿@model List<GestionTransport.FrontOffice.Models.Utils.VehiculeJourViewModel>
+@{
+	Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>Bienvenue - Liste du jour</title>
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" />
+</head>
+<body class="bg-light">
+	<div class="container mt-4">
+		<div class="row mb-4">
+			<div class="col-12 d-flex justify-content-between align-items-center">
+				<h3 class="mb-0">Liste des employés du jour par véhicule</h3>
+				<div>
+					<a class="btn btn-outline-secondary" href="@Url.Action("Index", "Home")">Retour tableau de bord</a>
+					<a class="btn btn-primary" href="@Url.Action("ExportJourPdf", "Home")">Exporter en PDF</a>
+				</div>
+			</div>
+		</div>
+
+		@if (Model == null || !Model.Any())
+		{
+			<div class="alert alert-info">Aucune affectation trouvée pour aujourd'hui.</div>
+		}
+		else
+		{
+			foreach (var vehicule in Model)
+			{
+				<div class="card mb-3">
+					<div class="card-header d-flex justify-content-between align-items-center">
+						<div>
+							<strong>@vehicule.VehiculeLabel</strong>
+							@if (vehicule.NombrePlaces.HasValue)
+							{
+								<span class="text-muted">(@vehicule.NombrePlaces places)</span>
+							}
+						</div>
+					</div>
+					<div class="card-body p-0">
+						<div class="table-responsive">
+							<table class="table mb-0">
+								<thead class="thead-light">
+									<tr>
+										<th>Employé</th>
+										<th>Matricule</th>
+										<th>Adresse</th>
+										<th>Site</th>
+										<th>Type</th>
+										<th>Heure</th>
+										<th>Commentaire</th>
+									</tr>
+								</thead>
+								<tbody>
+									@foreach (var emp in vehicule.Employes)
+									{
+										<tr>
+											<td>@emp.NomComplet</td>
+											<td>@emp.Matricule</td>
+											<td>@emp.Adresse</td>
+											<td>@emp.Site</td>
+											<td>@emp.TypeTransport</td>
+											<td>@emp.Heure</td>
+											<td>@emp.Commentaire</td>
+										</tr>
+									}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			}
+		}
+	</div>
+</body>
+</html>
+

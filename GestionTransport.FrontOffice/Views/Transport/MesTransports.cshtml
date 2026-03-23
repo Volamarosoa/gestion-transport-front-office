@@ -1,8 +1,8 @@
+@model PaginatedViewModel<AffectationModel>
 @{
     ViewData["Title"] = "Mes Demandes de Transport";
 }
 
-<!-- Enlevez le <div class="row"> ici car il est déjà dans _Layout.cshtml -->
 <div class="col-12">
     <div class="card">
         <div class="card-header">
@@ -26,52 +26,55 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>24/12/2025</td>
-                            <td>Aller</td>
-                            <td>07:30</td>
-                            <td><span class="badge badge-warning">En attente</span></td>
-                            <td>
-                                <a href="#" class="btn btn-sm btn-info">Voir</a>
-                                <a href="#" class="btn btn-sm btn-danger">Annuler</a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>23/12/2025</td>
-                            <td>Aller-Retour</td>
-                            <td>08:00 - 17:00</td>
-                            <td><span class="badge badge-success">Approuvé</span></td>
-                            <td>
-                                <a href="#" class="btn btn-sm btn-info">Voir</a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>20/12/2025</td>
-                            <td>Retour</td>
-                            <td>18:00</td>
-                            <td><span class="badge badge-danger">Refusé</span></td>
-                            <td>
-                                <a href="#" class="btn btn-sm btn-info">Voir</a>
-                            </td>
-                        </tr>
+                        @if (!Model.Items.Any())
+                        {
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">Aucune demande pour le moment.</td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var affectation in Model.Items)
+                            {
+                                var statut = affectation.GetStatut();
+                                var statutClass = affectation.EstValidee == true ? "success" : affectation.EstValidee == false ? "danger" : "warning";
+                                <tr>
+                                    <td>@affectation.DateTransport?.FormatDate()</td>
+                                    <td>@affectation.TypeTransport?.Libelle</td>
+                                    <td>@affectation.HeureTransport?.FormatHeure()</td>
+                                    <td><span class="badge badge-@statutClass">@statut</span></td>
+                                    <td>
+                                        <a asp-action="DetailsTransport" asp-route-id="@affectation.Id" class="btn btn-sm btn-info">Voir</a>
+                                        @if (!affectation.EstValidee.HasValue)
+                                        {
+                                            <a asp-action="AnnulerTransport" asp-route-id="@affectation.Id" class="btn btn-sm btn-danger">Annuler</a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
                     </tbody>
                 </table>
             </div>
-            
-            <!-- Pagination -->
+
             <div class="p-3">
                 <nav aria-label="Page navigation">
                     <ul class="pagination justify-content-end mb-0">
-                        <li class="page-item">
-                            <a class="page-link" href="#!" aria-label="Previous">
+                        <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
+                            <a class="page-link" href="@(!Model.HasPreviousPage ? "#" : Url.Action("MesTransports", new { page = Model.CurrentPage - 1, pageSize = Model.PageSize }))" aria-label="Previous">
                                 <span aria-hidden="true">&laquo;</span>
                             </a>
                         </li>
-                        <li class="page-item active"><a class="page-link" href="#!">1</a></li>
-                        <li class="page-item"><a class="page-link" href="#!">2</a></li>
-                        <li class="page-item"><a class="page-link" href="#!">3</a></li>
-                        <li class="page-item">
-                            <a class="page-link" href="#!" aria-label="Next">
+
+                        @foreach (var p in Model.GetPageNumbers())
+                        {
+                            <li class="page-item @(p == Model.CurrentPage ? "active" : "")">
+                                <a class="page-link" href="@Url.Action("MesTransports", new { page = p, pageSize = Model.PageSize })">@p</a>
+                            </li>
+                        }
+
+                        <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
+                            <a class="page-link" href="@(!Model.HasNextPage ? "#" : Url.Action("MesTransports", new { page = Model.CurrentPage + 1, pageSize = Model.PageSize }))" aria-label="Next">
                                 <span aria-hidden="true">&raquo;</span>
                             </a>
                         </li>

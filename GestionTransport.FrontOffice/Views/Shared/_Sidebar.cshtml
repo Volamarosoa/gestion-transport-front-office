@@ -48,7 +48,7 @@
                 </li>
                 
                 <!-- Transports (Menu déroulant) -->
-                <li class="nav-item pcoded-hasmenu @(ViewContext.RouteData.Values["controller"]?.ToString() == "Transport" ? "pcoded-trigger active" : "")">
+                <!-- <li class="nav-item pcoded-hasmenu @(ViewContext.RouteData.Values["controller"]?.ToString() == "Transport" ? "pcoded-trigger active" : "")">
                     <a href="javascript:void(0)" class="nav-link">
                         <span class="pcoded-micon"><i class="icofont-bus"></i></span>
                         <span class="pcoded-mtext">Mes Transports</span>
@@ -65,6 +65,12 @@
                             </a>
                         </li>
                     </ul>
+                </li> -->
+                <li class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "MesTransports" ? "active" : "")">
+                    <a asp-controller="Transport" asp-action="MesTransports" class="nav-link">
+                        <span class="pcoded-micon"><i class="feather icon-truck"></i></span>
+                        <span class="pcoded-mtext">Mes transports</span>
+                    </a>
                 </li>
                 
                 <li class="nav-item pcoded-menu-caption">

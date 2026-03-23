@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using GestionTransport.FrontOffice.Models;
 using GestionTransport.FrontOffice.Models.Employe;
+using GestionTransport.FrontOffice.Repositories.Interfaces;
 
 namespace GestionTransport.FrontOffice.Controllers
 {
@@ -9,90 +10,26 @@ namespace GestionTransport.FrontOffice.Controllers
         // Simulated logged-in employee ID (replace with session later)
         private const int CURRENT_EMPLOYE_ID = 1;
 
-        // Static data for sites
-        private static List<SiteModel> GetSites()
-        {
-            return new List<SiteModel>
-            {
-                new SiteModel
-                {
-                    Id = 1,
-                    Nom = "Siège Social",
-                    Adresse = "Ankorondrano, Antananarivo",
-                    Latitude = -18.9010m,
-                    Longitude = 47.5270m,
-                    Actif = true
-                },
-                new SiteModel
-                {
-                    Id = 2,
-                    Nom = "Usine Ankadimbahoaka",
-                    Adresse = "Ankadimbahoaka, Antananarivo",
-                    Latitude = -18.8530m,
-                    Longitude = 47.5380m,
-                    Actif = true
-                },
-                new SiteModel
-                {
-                    Id = 3,
-                    Nom = "Agence Antsirabe",
-                    Adresse = "Antsirabe, Madagascar",
-                    Latitude = -19.8658m,
-                    Longitude = 47.0368m,
-                    Actif = true
-                }
-            };
-        }
+        private readonly IEmployeRepository _employeRepository;
+        private readonly IAdresseEmployeRepository _adresseEmployeRepository;
+        private readonly ISiteRepository _siteRepository;
 
-        // Static data for employees
-        private static List<EmployeModel> GetEmployes()
+        public CarteController(
+            IEmployeRepository employeRepository,
+            IAdresseEmployeRepository adresseEmployeRepository,
+            ISiteRepository siteRepository)
         {
-            return new List<EmployeModel>
-            {
-                new EmployeModel
-                {
-                    Id = 1,
-                    Nom = "Rakoto",
-                    Prenom = "Jean",
-                    Matricule = "EMP001",
-                    Telephone = "0341234567"
-                }
-            };
+            _employeRepository = employeRepository;
+            _adresseEmployeRepository = adresseEmployeRepository;
+            _siteRepository = siteRepository;
         }
-
-        // Static data for employee addresses
-        private static List<AdresseEmployeModel> _adressesEmployes = new List<AdresseEmployeModel>
-        {
-            new AdresseEmployeModel
-            {
-                Id = 1,
-                IdEmploye = 1,
-                Adresse = "Analakely, Antananarivo",
-                Latitude = -18.9145m,
-                Longitude = 47.5265m,
-                EstPrincipale = true,
-                Actif = true,
-                DateInsertion = DateTime.Now.AddDays(-30)
-            },
-            new AdresseEmployeModel
-            {
-                Id = 2,
-                IdEmploye = 1,
-                Adresse = "Behoririka, Antananarivo",
-                Latitude = -18.9088m,
-                Longitude = 47.5239m,
-                EstPrincipale = false,
-                Actif = true,
-                DateInsertion = DateTime.Now.AddDays(-15)
-            }
-        };
 
         // GET: Display map with all addresses and sites
         public IActionResult Index()
         {
-            var employe = GetEmployes().FirstOrDefault(e => e.Id == CURRENT_EMPLOYE_ID);
-            var mesAdresses = _adressesEmployes.Where(a => a.IdEmploye == CURRENT_EMPLOYE_ID && a.Actif).ToList();
-            var sites = GetSites().Where(s => s.EstActif()).ToList();
+            var employe = _employeRepository.GetById(CURRENT_EMPLOYE_ID);
+            var mesAdresses = _adresseEmployeRepository.GetActifsByEmploye(CURRENT_EMPLOYE_ID);
+            var sites = _siteRepository.GetAvecCoordonnees().Where(s => s.EstActif()).ToList();
 
             ViewBag.Employe = employe;
             ViewBag.MesAdresses = mesAdresses;
@@ -118,18 +55,9 @@ namespace GestionTransport.FrontOffice.Controllers
                     return Json(new { success = false, message = "Veuillez sélectionner un point sur la carte." });
                 }
 
-                // If setting as principal, unset other principal addresses
-                if (estPrincipale)
-                {
-                    foreach (var addr in _adressesEmployes.Where(a => a.IdEmploye == CURRENT_EMPLOYE_ID && a.EstPrincipale))
-                    {
-                        addr.EstPrincipale = false;
-                    }
-                }
-
+                // Persistance
                 var nouvelleAdresse = new AdresseEmployeModel
                 {
-                    Id = _adressesEmployes.Any() ? _adressesEmployes.Max(a => a.Id) + 1 : 1,
                     IdEmploye = CURRENT_EMPLOYE_ID,
                     Adresse = adresse,
                     Latitude = latitude,
@@ -139,7 +67,15 @@ namespace GestionTransport.FrontOffice.Controllers
                     DateInsertion = DateTime.Now
                 };
 
-                _adressesEmployes.Add(nouvelleAdresse);
+                var newId = _adresseEmployeRepository.Create(nouvelleAdresse);
+
+                // Assurer l'unicité de l'adresse principale
+                if (estPrincipale)
+                {
+                    _adresseEmployeRepository.SetAsMain(newId, CURRENT_EMPLOYE_ID);
+                }
+
+                nouvelleAdresse.Id = newId;
 
                 return Json(new 
                 { 
@@ -161,15 +97,14 @@ namespace GestionTransport.FrontOffice.Controllers
         {
             try
             {
-                var adresse = _adressesEmployes.FirstOrDefault(a => a.Id == id && a.IdEmploye == CURRENT_EMPLOYE_ID);
-                
-                if (adresse == null)
+                var adresse = _adresseEmployeRepository.GetById(id);
+
+                if (adresse == null || adresse.IdEmploye != CURRENT_EMPLOYE_ID)
                 {
                     return Json(new { success = false, message = "Adresse non trouvée." });
                 }
 
-                adresse.Actif = false;
-                adresse.DateDesactivation = DateTime.Now;
+                _adresseEmployeRepository.Delete(id);
 
                 return Json(new { success = true, message = "Adresse supprimée avec succès!" });
             }

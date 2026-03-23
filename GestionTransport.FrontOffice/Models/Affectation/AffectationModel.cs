@@ -33,6 +33,7 @@ public class AffectationModel
     public VehiculeModel? Vehicule { get; set; }
     public HeureTransportModel? HeureTransport { get; set; }
     public TypeAffectationModel? TypeAffectation { get; set; }
+    public List<HistoriqueAffectationModel>? Historique { get; set; }
 
     public void Valider(string? commentaire = null)
     {
@@ -89,5 +90,27 @@ public class AffectationModel
         var date = DateTransport?.FormatDate() ?? "--/--/----";
         
         return $"{type} - {date} à {heure}";
+    }
+
+
+    public HistoriqueAffectationModel ToHistoriqueEntry()
+    {
+        return new HistoriqueAffectationModel
+        {
+            IdAffectation = Id,
+            IdDate = IdDate,
+            IdEmploye = IdEmploye,
+            IdAdresse = IdAdresse,
+            IdTypeTransport = IdTypeTransport,
+            IdSite = IdSite,
+            IdVehicule = IdVehicule,
+            IdHeureTransport = IdHeureTransport,
+            EstValidee = EstValidee,
+            Commentaire = Commentaire,
+            DateCreation = DateCreation,
+            DateValidation = DateValidation,
+            IdType = IdType,
+            DateModification = DateTime.Now
+        };
     }
 }

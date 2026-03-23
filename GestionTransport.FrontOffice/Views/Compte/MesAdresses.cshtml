@@ -1,0 +1,69 @@
+﻿@model IEnumerable<GestionTransport.FrontOffice.Models.Employe.AdresseEmployeModel>
+@{
+    ViewData["Title"] = "Mes adresses";
+}
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Mes adresses</h5>
+        <a asp-controller="Compte" asp-action="MonProfil" class="btn btn-sm btn-outline-primary">
+            <i class="feather icon-edit"></i> Gérer mes adresses
+        </a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead class="thead-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Adresse</th>
+                        <th>Coordonnées</th>
+                        <th>Date d'ajout</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (!Model.Any())
+                {
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">Aucune adresse enregistrée.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var adresse in Model)
+                    {
+                        var isPrincipale = adresse.EstPrincipale;
+                        <tr class="@(isPrincipale ? "table-success" : string.Empty)" style="@(isPrincipale ? "border-left:4px solid #dc3545;" : string.Empty)">
+                            <td>@adresse.Id</td>
+                            <td>@adresse.Adresse</td>
+                            <td>
+                                @if (adresse.Latitude.HasValue && adresse.Longitude.HasValue)
+                                {
+                                    <span class="text-muted">@adresse.Latitude, @adresse.Longitude</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">(non renseignées)</span>
+                                }
+                            </td>
+                            <td>@adresse.DateInsertion.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                @if (isPrincipale)
+                                {
+                                    <span class="badge badge-danger">Adresse actuelle</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-light">Secondaire</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+

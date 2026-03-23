@@ -9,6 +9,8 @@ public class EmployeModel
     public string Prenom { get; set; } = string.Empty;
 
     public string? Matricule { get; set; }
+    
+    public string? Email { get; set; }
 
     public string? Telephone { get; set; }
 

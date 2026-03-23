@@ -27,6 +27,10 @@ CREATE TABLE Employe (
 );
 GO
 
+-- Évite les doublons de matricule tout en permettant le NULL
+CREATE UNIQUE INDEX IX_Employe_Matricule ON Employe(Matricule) WHERE Matricule IS NOT NULL;
+GO
+
 CREATE TABLE AdresseEmploye (
     Id INT PRIMARY KEY IDENTITY(1,1),
     IdEmploye INT FOREIGN KEY REFERENCES Employe(Id),
@@ -115,6 +119,29 @@ CREATE TABLE Affectation (
 );
 GO
 
+        CREATE TABLE HistoriqueAffectation (
+            IdHistorique INT PRIMARY KEY IDENTITY(1,1),
+            IdAffectation INT FOREIGN KEY REFERENCES Affectation(Id),
+
+            IdDate INT,
+            IdEmploye INT,
+            IdAdresse INT,
+            IdTypeTransport INT,
+            IdSite INT,
+            IdVehicule INT,
+            IdHeureTransport INT,
+
+            EstValidee BIT,
+            Commentaire NVARCHAR(255),
+
+            DateCreation DATETIME,
+            DateValidation DATETIME,
+            IdType INT,
+
+            DateModification DATETIME DEFAULT GETDATE()
+        );
+        GO
+
 CREATE INDEX IX_Affectation_Archive ON Affectation(EstArchive, IdDate);
 CREATE INDEX IX_Affectation_DateEmploye ON Affectation(IdDate, IdEmploye) WHERE EstArchive = 0;
 
@@ -126,3 +153,10 @@ WHERE IdDate IN (
     WHERE DateJour < CAST(GETDATE() AS DATE)
 ) 
 AND EstArchive = 0;
+
+USE GestionTransport;
+GO
+
+ALTER TABLE Employe
+    ADD Email NVARCHAR(150) NULL;
+GO
