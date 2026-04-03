@@ -1,11 +1,11 @@
-﻿namespace GestionTransport.FrontOffice.Models.Affectation;
+namespace GestionTransport.FrontOffice.Models.Affectation;
 
 public class HistoriqueAffectationModel
 {
     public int IdHistorique { get; set; }
     public int IdAffectation { get; set; }
 
-    public int IdDate { get; set; }
+    public DateTime? Date { get; set; }
     public int IdEmploye { get; set; }
     public int IdAdresse { get; set; }
     public int IdTypeTransport { get; set; }
@@ -24,4 +24,3 @@ public class HistoriqueAffectationModel
 
     public AffectationModel? Affectation { get; set; }
 }
-

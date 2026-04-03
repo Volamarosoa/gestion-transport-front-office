@@ -181,7 +181,7 @@
                     <td class="truncate" title="@affectation.Adresse?.Adresse">
                         @(affectation.Adresse?.Adresse?.Length > 40 ? affectation.Adresse?.Adresse.Substring(0, 40) + "..." : affectation.Adresse?.Adresse)
                     </td>
-                    <td>@affectation.DateTransport?.FormatDate()</td>
+                    <td>@affectation.DateTransport?.ToString("dd/MM/yyyy")</td>
                     <td>
                         <strong>@affectation.HeureTransport?.FormatHeure()</strong><br />
                         <span class="text-muted">@affectation.HeureTransport?.Libelle</span>

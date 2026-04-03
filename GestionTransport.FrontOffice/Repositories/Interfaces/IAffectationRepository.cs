@@ -4,20 +4,23 @@ namespace GestionTransport.FrontOffice.Repositories.Interfaces
 {
     public interface IAffectationRepository : IRepository<AffectationModel>
     {
-        List<AffectationModel> GetByDate(int idDate);
+        List<AffectationModel> GetByDate(DateTime date);
         List<AffectationModel> GetByEmploye(int idEmploye);
         List<AffectationModel> GetByVehicule(int idVehicule);
         List<AffectationModel> GetEnAttente();
         List<AffectationModel> GetValidees();
+        List<AffectationModel> GetValidatedAffectationsToday();
         List<AffectationModel> GetRejetees();
         List<AffectationModel> GetNonArchivees();
         List<AffectationModel> GetArchivees();
         void Valider(int id, string? commentaire = null);
         void Rejeter(int id, string? commentaire = null);
         void Archiver(int id);
-        void ArchiverParDate(int idDate);
         void ArchiverDatesPassees();
-        AffectationModel GetByEmployeAndDate(int idEmploye, int idDate, int idTypeTransport);
-        List<AffectationModel> GetByDateAndTypeTransport(int idDate, int idTypeTransport);
+        AffectationModel GetByEmployeAndDate(int idEmploye, DateTime date, int idTypeTransport);
+        List<AffectationModel> GetByDateAndTypeTransport(DateTime date, int idTypeTransport);
+        List<AffectationModel> GetByDateAndHeureAndSiteAndType(DateTime date, int idHeureTransport, int idSite, int idTypeTransport);
+        int CountByVehiculeAndDateAndHeure(int idVehicule, DateTime date, int idHeureTransport);
+        void UpdateVehicule(int id, int? idVehicule);
     }
 }

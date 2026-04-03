@@ -8,24 +8,21 @@
                 <!-- Import CSV (simple button) -->
                 <a href="@Url.Action("ImportCsv", "Home")" 
                 class="btn btn-success btn-sm">
-                    <i class="feather icon-upload"></i> Import CSV
                 </a>
 
                 <!-- Export PDF (nested dropdown) -->
                 <div class="btn-group" role="group">
-                    <button type="button" 
-                            class="btn btn-danger btn-sm">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="exportCurrentPageToPDF(); return false;">
                         <i class="feather icon-download"></i> Export PDF
-                        <button 
-                            id="btnGroupDrop1"
-                            type="button" 
-                            class="btn btn-danger btn-sm dropdown-toggle dropdown-toggle-split" 
-                            data-toggle="dropdown" 
-                            aria-haspopup="true" 
-                            aria-expanded="false">
-                            <span class="sr-only">Toggle Dropdown</span>
-                            <span class="ripple ripple-animate" style="height: 124.688px; width: 124.688px; animation-duration: 0.7s; animation-timing-function: linear; background: rgb(255, 255, 255); opacity: 0.4; top: -51.2815px; left: 51.6247px;"></span>
-                        </button>
+                    </button>
+                    <button
+                        id="btnGroupDrop1"
+                        type="button"
+                        class="btn btn-danger btn-sm dropdown-toggle dropdown-toggle-split"
+                        data-toggle="dropdown"
+                        aria-haspopup="true"
+                        aria-expanded="false">
+                        <span class="sr-only">Toggle Dropdown</span>
                     </button>
 
                     <div class="dropdown-menu dropdown-menu-right" aria-labelledby="btnGroupDrop1">
@@ -113,7 +110,7 @@
                                 <small class="text-muted">@affectation.Adresse?.Adresse</small>
                             </td>
                             <td>
-                                <div>@affectation.DateTransport?.FormatDate()</div>
+                                <div>@affectation.DateTransport?.ToString("dd/MM/yyyy")</div>
                                 <small class="text-primary"><i class="feather icon-clock"></i> @affectation.HeureTransport?.FormatHeure() - @affectation.HeureTransport?.Libelle</small>
                             </td>
                             <td>
@@ -211,77 +208,3 @@
         </div>
     </div>
 </div>
-
-<!-- Scripts pour l'export PDF -->
-@section Scripts {
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
-    <script>
-
-        async function exportToPDF() {
-            // Afficher un loader sur le bouton
-            const btn = document.getElementById('exportPdfBtn');
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<i class="feather icon-loader"></i> Génération...';
-            btn.disabled = true;
-
-            try {
-                // Sélectionner la carte du tableau
-                const element = document.querySelector('.table-card');
-                
-                // Capturer en image avec html2canvas
-                const canvas = await html2canvas(element, {
-                    scale: 2,
-                    useCORS: true,
-                    logging: false,
-                    backgroundColor: '#ffffff'
-                });
-
-                // Créer le PDF
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF({
-                    orientation: 'landscape',
-                    unit: 'mm',
-                    format: 'a4'
-                });
-
-                const imgData = canvas.toDataURL('image/png');
-                const imgWidth = 297; // A4 landscape width in mm
-                const pageHeight = 210; // A4 height in mm
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                
-                let heightLeft = imgHeight;
-                let position = 0;
-
-                // Première page
-                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-
-                // Ajouter des pages supplémentaires si nécessaire
-                while (heightLeft > 0) {
-                    position = heightLeft - imgHeight;
-                    pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-                    heightLeft -= pageHeight;
-                }
-
-                // Sauvegarder le fichier
-                const timestamp = new Date().toISOString().slice(0,19).replace(/[:T]/g, '-');
-                const filename = `Affectations_${timestamp}.pdf`;
-                pdf.save(filename);
-
-                // Message de succès
-                console.log('PDF généré avec succès !');
-
-            } catch (error) {
-                console.error('Erreur lors de la génération du PDF:', error);
-                alert('Erreur lors de la génération du PDF. Vérifiez la console pour plus de détails.');
-            } finally {
-                // Restaurer le bouton
-                btn.innerHTML = originalHTML;
-                btn.disabled = false;
-            }
-        }
-    </script>
-}

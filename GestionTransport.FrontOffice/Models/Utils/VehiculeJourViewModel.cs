@@ -1,4 +1,4 @@
-﻿namespace GestionTransport.FrontOffice.Models.Utils;
+namespace GestionTransport.FrontOffice.Models.Utils;
 
 public class VehiculeJourViewModel
 {

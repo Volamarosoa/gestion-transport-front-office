@@ -1,4 +1,4 @@
-﻿namespace GestionTransport.FrontOffice.Models.Employe;
+namespace GestionTransport.FrontOffice.Models.Employe;
 
 public class EmployeModel
 {
@@ -17,6 +17,8 @@ public class EmployeModel
     public int IdDepartement { get; set; }
 
     public bool Actif { get; set; } = true;
+
+    public bool EstBeneficiaire { get; set; } = false;
 
     public DateTime DateInsertion { get; set; } = DateTime.Now;
 

@@ -18,8 +18,6 @@ public class AdresseEmployeModel
 
     public DateTime DateInsertion { get; set; } = DateTime.Now;
 
-    public DateTime? DateDesactivation { get; set; }
-
     public EmployeModel? Employe { get; set; }
 
     public void DefinirCommePrincipale()
@@ -31,16 +29,14 @@ public class AdresseEmployeModel
     public void Desactiver()
     {
         Actif = false;
-        DateDesactivation = DateTime.Now;
     }
 
     public void Activer()
     {
         Actif = true;
-        DateDesactivation = null;
     }
 
-    public bool EstActif() => Actif && DateDesactivation == null;
+    public bool EstActif() => Actif;
 
     public bool ADesCoordonnees() => Latitude.HasValue && Longitude.HasValue;
 }

@@ -26,10 +26,7 @@ namespace GestionTransport.FrontOffice.Repositories
                     : (decimal?)reader["Longitude"],
                 EstPrincipale = (bool)reader["EstPrincipale"],
                 Actif = (bool)reader["Actif"],
-                DateInsertion = (DateTime)reader["DateInsertion"],
-                DateDesactivation = reader["DateDesactivation"] == DBNull.Value 
-                    ? null 
-                    : (DateTime?)reader["DateDesactivation"]
+                DateInsertion = (DateTime)reader["DateInsertion"]
             };
         }
 
@@ -267,6 +264,29 @@ namespace GestionTransport.FrontOffice.Repositories
             }
 
             return adresses;
+        }
+
+        // AdresseEmploye table has no DateDesactivation column per base.sql
+        public override void Activate(int id)
+        {
+            using (var conn = GetConnection())
+            {
+                conn.Open();
+                var cmd = new SqlCommand("UPDATE AdresseEmploye SET Actif = 1 WHERE Id = @Id", conn);
+                AddParameter(cmd, "@Id", id);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public override void Deactivate(int id)
+        {
+            using (var conn = GetConnection())
+            {
+                conn.Open();
+                var cmd = new SqlCommand("UPDATE AdresseEmploye SET Actif = 0 WHERE Id = @Id", conn);
+                AddParameter(cmd, "@Id", id);
+                cmd.ExecuteNonQuery();
+            }
         }
     }
 }

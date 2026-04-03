@@ -1,15 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using GestionTransport.FrontOffice.Models;
 using GestionTransport.FrontOffice.Models.Employe;
+using GestionTransport.FrontOffice.Extensions;
 using GestionTransport.FrontOffice.Repositories.Interfaces;
 
 namespace GestionTransport.FrontOffice.Controllers
 {
+    [Authorize]
     public class CarteController : Controller
     {
-        // Simulated logged-in employee ID (replace with session later)
-        private const int CURRENT_EMPLOYE_ID = 1;
-
         private readonly IEmployeRepository _employeRepository;
         private readonly IAdresseEmployeRepository _adresseEmployeRepository;
         private readonly ISiteRepository _siteRepository;
@@ -27,8 +27,9 @@ namespace GestionTransport.FrontOffice.Controllers
         // GET: Display map with all addresses and sites
         public IActionResult Index()
         {
-            var employe = _employeRepository.GetById(CURRENT_EMPLOYE_ID);
-            var mesAdresses = _adresseEmployeRepository.GetActifsByEmploye(CURRENT_EMPLOYE_ID);
+            var employeId = User.GetEmployeId();
+            var employe = _employeRepository.GetById(employeId);
+            var mesAdresses = _adresseEmployeRepository.GetActifsByEmploye(employeId);
             var sites = _siteRepository.GetAvecCoordonnees().Where(s => s.EstActif()).ToList();
 
             ViewBag.Employe = employe;
@@ -56,9 +57,10 @@ namespace GestionTransport.FrontOffice.Controllers
                 }
 
                 // Persistance
+                var employeId = User.GetEmployeId();
                 var nouvelleAdresse = new AdresseEmployeModel
                 {
-                    IdEmploye = CURRENT_EMPLOYE_ID,
+                    IdEmploye = employeId,
                     Adresse = adresse,
                     Latitude = latitude,
                     Longitude = longitude,
@@ -72,7 +74,7 @@ namespace GestionTransport.FrontOffice.Controllers
                 // Assurer l'unicité de l'adresse principale
                 if (estPrincipale)
                 {
-                    _adresseEmployeRepository.SetAsMain(newId, CURRENT_EMPLOYE_ID);
+                    _adresseEmployeRepository.SetAsMain(newId, employeId);
                 }
 
                 nouvelleAdresse.Id = newId;
@@ -98,8 +100,9 @@ namespace GestionTransport.FrontOffice.Controllers
             try
             {
                 var adresse = _adresseEmployeRepository.GetById(id);
+                var employeId = User.GetEmployeId();
 
-                if (adresse == null || adresse.IdEmploye != CURRENT_EMPLOYE_ID)
+                if (adresse == null || adresse.IdEmploye != employeId)
                 {
                     return Json(new { success = false, message = "Adresse non trouvée." });
                 }

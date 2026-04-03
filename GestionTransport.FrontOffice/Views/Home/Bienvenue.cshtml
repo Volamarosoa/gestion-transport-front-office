@@ -1,9 +1,12 @@
 ﻿@model List<GestionTransport.FrontOffice.Models.Utils.VehiculeJourViewModel>
 @{
 	Layout = null;
+	var vehiculesFilter = ViewBag.VehiculesFilter as List<GestionTransport.FrontOffice.Models.Utils.VehiculeJourViewModel>
+		?? new List<GestionTransport.FrontOffice.Models.Utils.VehiculeJourViewModel>();
+	int? selectedVehiculeId = ViewBag.SelectedVehiculeId as int?;
 }
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
 	<meta charset="utf-8" />
 	<title>Bienvenue - Liste du jour</title>
@@ -13,10 +16,48 @@
 	<div class="container mt-4">
 		<div class="row mb-4">
 			<div class="col-12 d-flex justify-content-between align-items-center">
-				<h3 class="mb-0">Liste des employés du jour par véhicule</h3>
+				<h3 class="mb-0">Bienvenue - Transports valides du jour</h3>
 				<div>
-					<a class="btn btn-outline-secondary" href="@Url.Action("Index", "Home")">Retour tableau de bord</a>
-					<a class="btn btn-primary" href="@Url.Action("ExportJourPdf", "Home")">Exporter en PDF</a>
+					<a class="btn btn-primary" href="@Url.Action("DemanderTransport", "Transport")">Demander un transport</a>
+					@if (User.Identity?.IsAuthenticated == true)
+					{
+						<a class="btn btn-outline-secondary" href="@Url.Action("Index", "Home")">Tableau de bord</a>
+					}
+				</div>
+			</div>
+		</div>
+
+		<div class="row mb-3">
+			<div class="col-12">
+				<div class="card">
+					<div class="card-body py-3">
+						<form method="get" asp-action="Bienvenue" asp-controller="Home" class="form-inline">
+							<label class="mr-2 font-weight-bold">Filtre avance par vehicule</label>
+							<select class="form-control mr-2" name="vehiculeId">
+								<option value="">Tous les vehicules</option>
+								@foreach (var vehicule in vehiculesFilter)
+								{
+									if (vehicule.VehiculeId.HasValue)
+									{
+										if (selectedVehiculeId == vehicule.VehiculeId)
+										{
+											<option value="@vehicule.VehiculeId" selected>
+												@vehicule.VehiculeLabel
+											</option>
+										}
+										else
+										{
+											<option value="@vehicule.VehiculeId">
+												@vehicule.VehiculeLabel
+											</option>
+										}
+									}
+								}
+							</select>
+							<button type="submit" class="btn btn-info mr-2">Appliquer</button>
+							<a class="btn btn-outline-secondary" href="@Url.Action("Bienvenue", "Home")">Reinitialiser</a>
+						</form>
+					</div>
 				</div>
 			</div>
 		</div>

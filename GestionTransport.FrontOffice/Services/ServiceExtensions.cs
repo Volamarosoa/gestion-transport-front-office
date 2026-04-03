@@ -1,4 +1,4 @@
-﻿using GestionTransport.FrontOffice.Repositories;
+using GestionTransport.FrontOffice.Repositories;
 using GestionTransport.FrontOffice.Repositories.Interfaces;
 
 namespace GestionTransport.FrontOffice.Services
@@ -11,8 +11,6 @@ namespace GestionTransport.FrontOffice.Services
             services.AddScoped<IDatabaseService, DatabaseService>();
 
             // Repositories
-            // services.AddScoped<ICompteRepository, CompteRepository>(); // ← SUPPRIMER CETTE LIGNE
-            
             services.AddScoped<IEmployeRepository, EmployeRepository>();
             services.AddScoped<IDepartementRepository, DepartementRepository>();
             services.AddScoped<ISiteRepository, SiteRepository>();
@@ -23,13 +21,17 @@ namespace GestionTransport.FrontOffice.Services
             services.AddScoped<IAdresseEmployeRepository, AdresseEmployeRepository>();
             services.AddScoped<ITypeAffectationRepository, TypeAffectationRepository>();
             services.AddScoped<IAffectationRepository, AffectationRepository>();
+            services.AddScoped<IHistoriqueAffectationRepository, HistoriqueAffectationRepository>();
+            services.AddScoped<IAuthentificationRepository, AuthentificationRepository>();
 
             return services;
         }
 
         public static IServiceCollection AddBusinessServices(this IServiceCollection services)
         {
-            services.AddScoped<AffectationArchivageService>();
+            services.AddScoped<AdresseEmployeService>();
+            services.AddScoped<HeureTransportService>();
+            services.AddScoped<AffectationService>();
             services.AddScoped<CsvImportService>();
             
             return services;

@@ -1,4 +1,4 @@
-﻿<nav class="pcoded-navbar menu-light">
+<nav class="pcoded-navbar menu-light">
     <div class="navbar-wrapper">
         <div class="navbar-content scroll-div">
             
@@ -10,23 +10,6 @@
                         <div id="more-details">Employé <i class="fa fa-caret-down"></i></div>
                     </div>
                 </div>
-                <div class="collapse" id="nav-user-link">
-                    <ul class="list-unstyled">
-                        <li class="list-group-item">
-                            <a asp-controller="Compte" asp-action="MonProfil">
-                                <i class="feather icon-user m-r-5"></i>Mon profil
-                            </a>
-                        </li>
-                        <li class="list-group-item">
-                            <a asp-controller="Compte" asp-action="Parametres">
-                                <i class="feather icon-settings m-r-5"></i>Paramètres
-                            </a>
-                        </li>
-                        <li class="list-group-item">
-                            <a href="#!"><i class="feather icon-log-out m-r-5"></i>Déconnexion</a>
-                        </li>
-                    </ul>
-                </div>
             </div>
             
             <!-- Menu Items -->
@@ -35,11 +18,11 @@
                     <label>Navigation</label>
                 </li>
                 
-                <!-- Dashboard -->
-                <li class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")">
+                <!-- Accueil -->
+                <li class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")">
                     <a asp-controller="Home" asp-action="Index" class="nav-link">
                         <span class="pcoded-micon"><i class="feather icon-home"></i></span>
-                        <span class="pcoded-mtext">Tableau de bord</span>
+                        <span class="pcoded-mtext">Accueil</span>
                     </a>
                 </li>
                 
@@ -47,34 +30,24 @@
                     <label>Demandes de Transport</label>
                 </li>
                 
-                <!-- Transports (Menu déroulant) -->
-                <!-- <li class="nav-item pcoded-hasmenu @(ViewContext.RouteData.Values["controller"]?.ToString() == "Transport" ? "pcoded-trigger active" : "")">
-                    <a href="javascript:void(0)" class="nav-link">
-                        <span class="pcoded-micon"><i class="icofont-bus"></i></span>
-                        <span class="pcoded-mtext">Mes Transports</span>
-                    </a>
-                    <ul class="pcoded-submenu">
-                        <li class="@(ViewContext.RouteData.Values["action"]?.ToString() == "DemanderTransport" ? "active" : "")">
-                            <a asp-controller="Transport" asp-action="DemanderTransport">
-                                <span class="pcoded-mtext">Demander un transport</span>
-                            </a>
-                        </li>
-                        <li class="@(ViewContext.RouteData.Values["action"]?.ToString() == "MesTransports" ? "active" : "")">
-                            <a asp-controller="Transport" asp-action="MesTransports">
-                                <span class="pcoded-mtext">Liste de mes transports</span>
-                            </a>
-                        </li>
-                    </ul>
-                </li> -->
-                <li class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "MesTransports" ? "active" : "")">
+                <!-- Mes Transports -->
+                <li class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Transport" ? "active" : "")">
                     <a asp-controller="Transport" asp-action="MesTransports" class="nav-link">
-                        <span class="pcoded-micon"><i class="feather icon-truck"></i></span>
+                        <span class="pcoded-micon"><i class="feather icon-calendar"></i></span>
                         <span class="pcoded-mtext">Mes transports</span>
                     </a>
                 </li>
                 
+                <!-- Mon transport du jour -->
+                <li class="nav-item @(ViewContext.RouteData.Values["action"]?.ToString() == "Bienvenue" ? "active" : "")">
+                    <a asp-controller="Home" asp-action="Bienvenue" class="nav-link">
+                        <span class="pcoded-micon"><i class="feather icon-bell"></i></span>
+                        <span class="pcoded-mtext">Mon transport du jour</span>
+                    </a>
+                </li>
+                
                 <li class="nav-item pcoded-menu-caption">
-                    <label>Mon Circuit Régulier</label>
+                    <label>Mon Circuit</label>
                 </li>
                 
                 <!-- Mon Circuit -->
@@ -82,22 +55,6 @@
                     <a asp-controller="Circuit" asp-action="MonCircuit" class="nav-link">
                         <span class="pcoded-micon"><i class="feather icon-map"></i></span>
                         <span class="pcoded-mtext">Mon circuit</span>
-                    </a>
-                </li>
-                
-                <!-- Horaires -->
-                <li class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Horaire" ? "active" : "")">
-                    <a asp-controller="Horaire" asp-action="MesHoraires" class="nav-link">
-                        <span class="pcoded-micon"><i class="feather icon-clock"></i></span>
-                        <span class="pcoded-mtext">Mes horaires</span>
-                    </a>
-                </li>
-                
-                <!-- Suivi en temps réel -->
-                <li class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Suivi" ? "active" : "")">
-                    <a asp-controller="Suivi" asp-action="Index" class="nav-link">
-                        <span class="pcoded-micon"><i class="feather icon-navigation"></i></span>
-                        <span class="pcoded-mtext">Suivre mon bus</span>
                     </a>
                 </li>
                 
@@ -116,26 +73,22 @@
                 <!-- Mon Adresse -->
                 <li class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Compte" && ViewContext.RouteData.Values["action"]?.ToString() == "MonAdresse" ? "active" : "")">
                     <a asp-controller="Compte" asp-action="MonAdresse" class="nav-link">
-                        <span class="pcoded-micon"><i class="feather icon-map-pin"></i></span>
-                        <span class="pcoded-mtext">Mon adresse</span>
+                        <span class="pcoded-micon"><i class="feather icon-folder"></i></span>
+                        <span class="pcoded-mtext">Mes adresses</span>
                     </a>
                 </li>
                 
-                <!-- Mon Profil -->
-                <li class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Compte" && ViewContext.RouteData.Values["action"]?.ToString() == "MonProfil" ? "active" : "")">
-                    <a asp-controller="Compte" asp-action="MonProfil" class="nav-link">
-                        <span class="pcoded-micon"><i class="feather icon-user"></i></span>
-                        <span class="pcoded-mtext">Mon profil</span>
+                <!-- Deconnexion -->
+                <li class="nav-item">
+                    <form id="logoutSidebarForm" asp-controller="Auth" asp-action="Logout" method="post" class="d-none">
+                        @Html.AntiForgeryToken()
+                    </form>
+                    <a href="#" class="nav-link" onclick="document.getElementById('logoutSidebarForm').submit(); return false;">
+                        <span class="pcoded-micon"><i class="feather icon-log-out"></i></span>
+                        <span class="pcoded-mtext">Deconnexion</span>
                     </a>
                 </li>
                 
-                <!-- Notifications -->
-                <li class="nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Notification" ? "active" : "")">
-                    <a asp-controller="Notification" asp-action="Index" class="nav-link">
-                        <span class="pcoded-micon"><i class="feather icon-bell"></i></span>
-                        <span class="pcoded-mtext">Notifications</span>
-                    </a>
-                </li>
             </ul>
         </div>
     </div>

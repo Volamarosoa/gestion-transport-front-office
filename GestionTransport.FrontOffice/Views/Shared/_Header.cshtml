@@ -25,77 +25,6 @@
         </ul>
         
         <ul class="navbar-nav ml-auto">
-            <!-- Notifications améliorées -->
-            <li>
-                <div class="dropdown">
-                    <a class="dropdown-toggle" href="#" data-toggle="dropdown">
-                        <i class="icon feather icon-bell"></i>
-                        <span class="badge badge-pill badge-danger notification-count">3</span>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-right notification">
-                        <div class="noti-head">
-                            <h6 class="d-inline-block m-b-0">Notifications</h6>
-                            <div class="float-right">
-                                <a href="#!" class="m-r-10 text-primary">Marquer comme lu</a>
-                                <a href="#!" class="text-muted">Tout effacer</a>
-                            </div>
-                        </div>
-                        <ul class="noti-body">
-                            <li class="n-title">
-                                <p class="m-b-0">NOUVELLES</p>
-                            </li>
-                            <li class="notification unread">
-                                <div class="media">
-                                    <div class="notification-icon bg-primary">
-                                        <i class="feather icon-check-circle"></i>
-                                    </div>
-                                    <div class="media-body">
-                                        <p><strong>Transport validé</strong>
-                                            <span class="n-time text-muted">
-                                                <i class="icon feather icon-clock m-r-10"></i>5 min
-                                            </span>
-                                        </p>
-                                        <p class="small">Votre transport #045 a été validé</p>
-                                    </div>
-                                </div>
-                            </li>
-                            <li class="notification unread">
-                                <div class="media">
-                                    <div class="notification-icon bg-warning">
-                                        <i class="feather icon-alert-triangle"></i>
-                                    </div>
-                                    <div class="media-body">
-                                        <p><strong>Modification d'horaire</strong>
-                                            <span class="n-time text-muted">
-                                                <i class="icon feather icon-clock m-r-10"></i>30 min
-                                            </span>
-                                        </p>
-                                        <p class="small">Le transport de demain est reporté de 15 min</p>
-                                    </div>
-                                </div>
-                            </li>
-                            <li class="notification">
-                                <div class="media">
-                                    <div class="notification-icon bg-success">
-                                        <i class="feather icon-truck"></i>
-                                    </div>
-                                    <div class="media-body">
-                                        <p><strong>Bus en route</strong>
-                                            <span class="n-time text-muted">
-                                                <i class="icon feather icon-clock m-r-10"></i>2h
-                                            </span>
-                                        </p>
-                                        <p class="small">Votre bus est parti du dépôt</p>
-                                    </div>
-                                </div>
-                            </li>
-                        </ul>
-                        <div class="noti-footer">
-                            <a href="@Url.Action("Index", "Notification")">Voir toutes les notifications</a>
-                        </div>
-                    </div>
-                </div>
-            </li>
             
             <!-- User Profile amélioré -->
             <li>
@@ -114,9 +43,12 @@
                                 <h6>Jean Dupont</h6>
                                 <span class="text-muted">EMP001</span>
                             </div>
-                            <a href="#!" class="dud-logout" title="Déconnexion">
-                                <i class="feather icon-log-out"></i>
-                            </a>
+                            <form asp-controller="Auth" asp-action="Logout" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="dud-logout border-0 bg-transparent" title="Deconnexion">
+                                    <i class="feather icon-log-out"></i>
+                                </button>
+                            </form>
                         </div>
                         <ul class="pro-body">
                             <li>
@@ -125,19 +57,12 @@
                                 </a>
                             </li>
                             <li>
-                                <a asp-controller="Compte" asp-action="Parametres" class="dropdown-item">
-                                    <i class="feather icon-settings"></i> Paramètres
-                                </a>
-                            </li>
-                            <li>
-                                <a asp-action="Privacy" asp-controller="Home" class="dropdown-item">
-                                    <i class="feather icon-shield"></i> Confidentialité
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#!" class="dropdown-item text-danger">
-                                    <i class="feather icon-log-out"></i> Déconnexion
-                                </a>
+                                <form asp-controller="Auth" asp-action="Logout" method="post" class="px-3">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="dropdown-item text-danger border-0 bg-transparent p-0">
+                                        <i class="feather icon-log-out"></i> Deconnexion
+                                    </button>
+                                </form>
                             </li>
                         </ul>
                     </div>

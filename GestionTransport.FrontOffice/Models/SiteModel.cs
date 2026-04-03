@@ -16,21 +16,17 @@ public class SiteModel
 
     public DateTime DateInsertion { get; set; } = DateTime.Now;
 
-    public DateTime? DateDesactivation { get; set; }
-
     public void Desactiver()
     {
         Actif = false;
-        DateDesactivation = DateTime.Now;
     }
 
     public void Activer()
     {
         Actif = true;
-        DateDesactivation = null;
     }
 
-    public bool EstActif() => Actif && DateDesactivation == null;
+    public bool EstActif() => Actif;
 
     public bool ADesCoordonnees() => Latitude.HasValue && Longitude.HasValue;
 

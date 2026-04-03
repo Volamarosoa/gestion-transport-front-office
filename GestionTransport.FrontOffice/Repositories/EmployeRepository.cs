@@ -20,8 +20,10 @@ namespace GestionTransport.FrontOffice.Repositories
                 Prenom = reader["Prenom"].ToString(),
                 Matricule = reader["Matricule"]?.ToString(),
                 Telephone = reader["Telephone"]?.ToString(),
+                Email = reader["Email"] == DBNull.Value ? null : reader["Email"]?.ToString(),
                 IdDepartement = (int)reader["IdDepartement"],
                 Actif = (bool)reader["Actif"],
+                EstBeneficiaire = (bool)reader["EstBeneficiaire"],
                 DateInsertion = (DateTime)reader["DateInsertion"],
                 DateDesactivation = reader["DateDesactivation"] == DBNull.Value 
                     ? null 
@@ -73,17 +75,19 @@ namespace GestionTransport.FrontOffice.Repositories
             {
                 conn.Open();
                 var cmd = new SqlCommand(
-                    @"INSERT INTO Employe (Nom, Prenom, Matricule, Telephone, IdDepartement, Actif, DateInsertion) 
+                    @"INSERT INTO Employe (Nom, Prenom, Matricule, Telephone, Email, IdDepartement, Actif, EstBeneficiaire, DateInsertion) 
                       OUTPUT INSERTED.Id
-                      VALUES (@Nom, @Prenom, @Matricule, @Telephone, @IdDepartement, @Actif, @DateInsertion)",
+                      VALUES (@Nom, @Prenom, @Matricule, @Telephone, @Email, @IdDepartement, @Actif, @EstBeneficiaire, @DateInsertion)",
                     conn);
 
                 AddParameter(cmd, "@Nom", employe.Nom);
                 AddParameter(cmd, "@Prenom", employe.Prenom);
                 AddParameter(cmd, "@Matricule", employe.Matricule);
                 AddParameter(cmd, "@Telephone", employe.Telephone);
+                AddParameter(cmd, "@Email", employe.Email);
                 AddParameter(cmd, "@IdDepartement", employe.IdDepartement);
                 AddParameter(cmd, "@Actif", employe.Actif);
+                AddParameter(cmd, "@EstBeneficiaire", employe.EstBeneficiaire);
                 AddParameter(cmd, "@DateInsertion", employe.DateInsertion);
 
                 return (int)cmd.ExecuteScalar();
@@ -101,7 +105,9 @@ namespace GestionTransport.FrontOffice.Repositories
                           Prenom = @Prenom, 
                           Matricule = @Matricule,
                           Telephone = @Telephone,
-                          IdDepartement = @IdDepartement
+                          Email = @Email,
+                          IdDepartement = @IdDepartement,
+                          EstBeneficiaire = @EstBeneficiaire
                       WHERE Id = @Id",
                     conn);
 
@@ -110,7 +116,9 @@ namespace GestionTransport.FrontOffice.Repositories
                 AddParameter(cmd, "@Prenom", employe.Prenom);
                 AddParameter(cmd, "@Matricule", employe.Matricule);
                 AddParameter(cmd, "@Telephone", employe.Telephone);
+                AddParameter(cmd, "@Email", employe.Email);
                 AddParameter(cmd, "@IdDepartement", employe.IdDepartement);
+                AddParameter(cmd, "@EstBeneficiaire", employe.EstBeneficiaire);
 
                 cmd.ExecuteNonQuery();
             }
@@ -134,7 +142,7 @@ namespace GestionTransport.FrontOffice.Repositories
             using (var conn = GetConnection())
             {
                 conn.Open();
-                var cmd = new SqlCommand("SELECT * FROM Employe WHERE IdDepartement = @IdDepartement", conn);
+                var cmd = new SqlCommand("SELECT * FROM Employe WHERE IdDepartement = @IdDepartement AND Actif = 1", conn);
                 AddParameter(cmd, "@IdDepartement", idDepartement);
                 var reader = cmd.ExecuteReader();
 
@@ -166,7 +174,7 @@ namespace GestionTransport.FrontOffice.Repositories
             return employes;
         }
 
-        public EmployeModel GetByMatricule(string matricule)
+        public EmployeModel? GetByMatricule(string matricule)
         {
             using (var conn = GetConnection())
             {
@@ -183,6 +191,17 @@ namespace GestionTransport.FrontOffice.Repositories
             }
 
             return null;
+        }
+
+        public long CountByMatriculeStartingWith(string prefix)
+        {
+            using (var conn = GetConnection())
+            {
+                conn.Open();
+                var cmd = new SqlCommand("SELECT COUNT(*) FROM Employe WHERE Matricule LIKE @Prefix + '%'", conn);
+                AddParameter(cmd, "@Prefix", prefix);
+                return (int)cmd.ExecuteScalar();
+            }
         }
     }
 }

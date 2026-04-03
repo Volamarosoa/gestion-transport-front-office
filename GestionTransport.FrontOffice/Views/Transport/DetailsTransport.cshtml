@@ -1,0 +1,117 @@
+@model GestionTransport.FrontOffice.Models.Affectation.AffectationModel
+@{
+    ViewData["Title"] = "Details de ma demande";
+    var statutClass = Model.EstValidee == true ? "success" : Model.EstValidee == false ? "danger" : "warning";
+}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Demande #@Model.Id.ToString("D4")</h5>
+                <span class="badge badge-@statutClass">@Model.GetStatut()</span>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="text-muted d-block">Date transport</label>
+                        <strong>@Model.DateTransport?.ToString("dd/MM/yyyy")</strong>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted d-block">Heure</label>
+                        <strong>@Model.HeureTransport?.FormatHeure() (@Model.HeureTransport?.Libelle)</strong>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="text-muted d-block">Type</label>
+                        <span class="badge badge-light-@(Model.TypeTransport?.EstAller() == true ? "info" : "secondary")">
+                            @Model.TypeTransport?.Libelle
+                        </span>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted d-block">Date creation</label>
+                        <strong>@Model.DateCreation.ToString("dd/MM/yyyy HH:mm")</strong>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="text-muted d-block">Commentaire</label>
+                    <div class="p-2 bg-light rounded">
+                        @(string.IsNullOrWhiteSpace(Model.Commentaire) ? "Aucun commentaire" : Model.Commentaire)
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="border rounded p-3 h-100">
+                            <h6 class="mb-2"><i class="feather icon-map-pin"></i> Adresse</h6>
+                            <div>@Model.Adresse?.Adresse</div>
+                            @if (Model.Adresse?.Latitude.HasValue == true && Model.Adresse?.Longitude.HasValue == true)
+                            {
+                                <small class="text-muted">@Model.Adresse.Latitude, @Model.Adresse.Longitude</small>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="border rounded p-3 h-100">
+                            <h6 class="mb-2"><i class="feather icon-home"></i> Site</h6>
+                            <div>@Model.Site?.Nom</div>
+                            <small class="text-muted">@Model.Site?.Adresse</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="border rounded p-3 h-100">
+                            <h6 class="mb-2"><i class="feather icon-truck"></i> Vehicule</h6>
+                            @if (Model.Vehicule != null)
+                            {
+                                <div>@Model.Vehicule.Matricule</div>
+                                <small class="text-muted">@Model.Vehicule.NombrePlaces place(s)</small>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Pas encore affecte</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="border rounded p-3 h-100">
+                            <h6 class="mb-2"><i class="feather icon-user"></i> Employe</h6>
+                            <div>@Model.Employe?.NomComplet()</div>
+                            <small class="text-muted">@Model.Employe?.Matricule</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer d-flex justify-content-end gap-2">
+                <a asp-action="MesTransports" class="btn btn-outline-secondary btn-sm">
+                    <i class="feather icon-arrow-left"></i> Retour
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Timeline</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted d-block">Cree le</small>
+                    <strong>@Model.DateCreation.ToString("dd/MM/yyyy HH:mm")</strong>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block">Valide/rejete le</small>
+                    <strong>@(Model.DateValidation?.ToString("dd/MM/yyyy HH:mm") ?? "En attente")</strong>
+                </div>
+                <div>
+                    <small class="text-muted d-block">Archive</small>
+                    <strong>@(Model.EstArchive ? "Oui" : "Non")</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

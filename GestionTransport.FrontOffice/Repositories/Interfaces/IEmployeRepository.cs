@@ -6,6 +6,7 @@ namespace GestionTransport.FrontOffice.Repositories.Interfaces
     {
         List<EmployeModel> GetByDepartement(int idDepartement);
         List<EmployeModel> GetActifs();
-        EmployeModel GetByMatricule(string matricule);
+        EmployeModel? GetByMatricule(string matricule);
+        long CountByMatriculeStartingWith(string prefix);
     }
 }

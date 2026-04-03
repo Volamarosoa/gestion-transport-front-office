@@ -7,7 +7,7 @@ namespace GestionTransport.FrontOffice.Repositories
 {
     public class SiteRepository : BaseRepository<SiteModel>, ISiteRepository
     {
-        protected override string TableName => "SITE";
+        protected override string TableName => "Site";
 
         public SiteRepository(IDatabaseService dbService) : base(dbService) { }
 
@@ -25,10 +25,7 @@ namespace GestionTransport.FrontOffice.Repositories
                     ? null 
                     : (decimal?)reader["Longitude"],
                 Actif = (bool)reader["Actif"],
-                DateInsertion = (DateTime)reader["DateInsertion"],
-                DateDesactivation = reader["DateDesactivation"] == DBNull.Value 
-                    ? null 
-                    : (DateTime?)reader["DateDesactivation"]
+                DateInsertion = (DateTime)reader["DateInsertion"]
             };
         }
 
@@ -39,7 +36,7 @@ namespace GestionTransport.FrontOffice.Repositories
             using (var conn = GetConnection())
             {
                 conn.Open();
-                var cmd = new SqlCommand("SELECT * FROM SITE ORDER BY Nom", conn);
+                var cmd = new SqlCommand("SELECT * FROM Site ORDER BY Nom", conn);
                 var reader = cmd.ExecuteReader();
 
                 while (reader.Read())
@@ -56,7 +53,7 @@ namespace GestionTransport.FrontOffice.Repositories
             using (var conn = GetConnection())
             {
                 conn.Open();
-                var cmd = new SqlCommand("SELECT * FROM SITE WHERE Id = @Id", conn);
+                var cmd = new SqlCommand("SELECT * FROM Site WHERE Id = @Id", conn);
                 AddParameter(cmd, "@Id", id);
                 
                 var reader = cmd.ExecuteReader();
@@ -76,7 +73,7 @@ namespace GestionTransport.FrontOffice.Repositories
             {
                 conn.Open();
                 var cmd = new SqlCommand(
-                    @"INSERT INTO SITE (Nom, Adresse, Latitude, Longitude, Actif, DateInsertion) 
+                    @"INSERT INTO Site (Nom, Adresse, Latitude, Longitude, Actif, DateInsertion) 
                       OUTPUT INSERTED.Id
                       VALUES (@Nom, @Adresse, @Latitude, @Longitude, @Actif, @DateInsertion)",
                     conn);
@@ -98,7 +95,7 @@ namespace GestionTransport.FrontOffice.Repositories
             {
                 conn.Open();
                 var cmd = new SqlCommand(
-                    @"UPDATE SITE 
+                    @"UPDATE Site 
                       SET Nom = @Nom, 
                           Adresse = @Adresse,
                           Latitude = @Latitude,
@@ -121,7 +118,7 @@ namespace GestionTransport.FrontOffice.Repositories
             using (var conn = GetConnection())
             {
                 conn.Open();
-                var cmd = new SqlCommand("DELETE FROM SITE WHERE Id = @Id", conn);
+                var cmd = new SqlCommand("DELETE FROM Site WHERE Id = @Id", conn);
                 AddParameter(cmd, "@Id", id);
                 cmd.ExecuteNonQuery();
             }
@@ -134,7 +131,7 @@ namespace GestionTransport.FrontOffice.Repositories
             using (var conn = GetConnection())
             {
                 conn.Open();
-                var cmd = new SqlCommand("SELECT * FROM SITE WHERE Actif = 1 ORDER BY Nom", conn);
+                var cmd = new SqlCommand("SELECT * FROM Site WHERE Actif = 1 ORDER BY Nom", conn);
                 var reader = cmd.ExecuteReader();
 
                 while (reader.Read())
@@ -154,7 +151,7 @@ namespace GestionTransport.FrontOffice.Repositories
             {
                 conn.Open();
                 var cmd = new SqlCommand(
-                    "SELECT * FROM SITE WHERE Latitude IS NOT NULL AND Longitude IS NOT NULL ORDER BY Nom", 
+                    "SELECT * FROM Site WHERE Latitude IS NOT NULL AND Longitude IS NOT NULL ORDER BY Nom", 
                     conn);
                 var reader = cmd.ExecuteReader();
 
@@ -172,7 +169,7 @@ namespace GestionTransport.FrontOffice.Repositories
             using (var conn = GetConnection())
             {
                 conn.Open();
-                var cmd = new SqlCommand("SELECT * FROM SITE WHERE Nom = @Nom", conn);
+                var cmd = new SqlCommand("SELECT * FROM Site WHERE Nom = @Nom", conn);
                 AddParameter(cmd, "@Nom", nom);
                 
                 var reader = cmd.ExecuteReader();
@@ -184,6 +181,29 @@ namespace GestionTransport.FrontOffice.Repositories
             }
 
             return null;
+        }
+
+        // Site table has no DateDesactivation column per base.sql
+        public override void Activate(int id)
+        {
+            using (var conn = GetConnection())
+            {
+                conn.Open();
+                var cmd = new SqlCommand("UPDATE Site SET Actif = 1 WHERE Id = @Id", conn);
+                AddParameter(cmd, "@Id", id);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        public override void Deactivate(int id)
+        {
+            using (var conn = GetConnection())
+            {
+                conn.Open();
+                var cmd = new SqlCommand("UPDATE Site SET Actif = 0 WHERE Id = @Id", conn);
+                AddParameter(cmd, "@Id", id);
+                cmd.ExecuteNonQuery();
+            }
         }
     }
 }

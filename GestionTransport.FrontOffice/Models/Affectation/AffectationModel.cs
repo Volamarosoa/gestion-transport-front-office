@@ -8,7 +8,7 @@ public class AffectationModel
     public int Id { get; set; }
 
     // Clés étrangères
-    public int IdDate { get; set; }
+    public DateTime? DateTransport { get; set; }
     public int IdEmploye { get; set; }
     public int IdAdresse { get; set; }
     public int IdTypeTransport { get; set; }
@@ -25,7 +25,6 @@ public class AffectationModel
 
     public bool EstArchive { get; set; } = false;
 
-    public DateTransportModel? DateTransport { get; set; }
     public EmployeModel? Employe { get; set; }
     public AdresseEmployeModel? Adresse { get; set; }
     public TypeTransportModel? TypeTransport { get; set; }
@@ -87,18 +86,17 @@ public class AffectationModel
     {
         var type = TypeTransport?.Libelle ?? "Transport";
         var heure = HeureTransport?.FormatHeure() ?? "--:--";
-        var date = DateTransport?.FormatDate() ?? "--/--/----";
+        var date = DateTransport?.ToString("dd/MM/yyyy") ?? "--/--/----";
         
         return $"{type} - {date} à {heure}";
     }
-
 
     public HistoriqueAffectationModel ToHistoriqueEntry()
     {
         return new HistoriqueAffectationModel
         {
             IdAffectation = Id,
-            IdDate = IdDate,
+            Date = DateTransport,
             IdEmploye = IdEmploye,
             IdAdresse = IdAdresse,
             IdTypeTransport = IdTypeTransport,
