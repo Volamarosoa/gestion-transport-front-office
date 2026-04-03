@@ -93,7 +93,7 @@ public class CompteController : Controller
         {
             var employeId = User.GetEmployeId();
             var imported = 0;
-            var skipped = 0;
+            var toInsert = new List<AdresseEmployeModel>();
 
             using var stream = file.OpenReadStream();
             using var reader = new StreamReader(stream);
@@ -106,44 +106,78 @@ public class CompteController : Controller
             }
 
             var delimiter = headerLine.Contains(';') ? ';' : ',';
+            var headers = headerLine
+                .Split(delimiter)
+                .Select(h => h.Trim())
+                .ToArray();
 
+            var expectedHeaders = new[] { "Adresse", "Latitude", "Longitude", "EstPrincipale" };
+            var strictMatch = headers.Length == expectedHeaders.Length
+                              && headers.SequenceEqual(expectedHeaders, StringComparer.OrdinalIgnoreCase);
+
+            if (!strictMatch)
+            {
+                TempData["Error"] = "Colonnes CSV invalides. Format attendu: Adresse;Latitude;Longitude;EstPrincipale. Aucune donnee n'a ete importee.";
+                return RedirectToAction("MonAdresse");
+            }
+
+            var lineNumber = 1;
             while (!reader.EndOfStream)
             {
                 var line = await reader.ReadLineAsync();
+                lineNumber++;
+
                 if (string.IsNullOrWhiteSpace(line))
                 {
                     continue;
                 }
 
                 var parts = line.Split(delimiter);
-                if (parts.Length == 0 || string.IsNullOrWhiteSpace(parts[0]))
+                if (parts.Length != expectedHeaders.Length)
                 {
-                    skipped++;
-                    continue;
+                    TempData["Error"] = $"Ligne {lineNumber} invalide: nombre de colonnes incorrect. Aucune donnee n'a ete importee.";
+                    return RedirectToAction("MonAdresse");
                 }
 
                 var adresseText = parts[0].Trim();
+                if (string.IsNullOrWhiteSpace(adresseText))
+                {
+                    TempData["Error"] = $"Ligne {lineNumber} invalide: la colonne Adresse est obligatoire. Aucune donnee n'a ete importee.";
+                    return RedirectToAction("MonAdresse");
+                }
+
                 decimal? latitude = null;
                 decimal? longitude = null;
                 var estPrincipale = false;
 
-                if (parts.Length > 1 && decimal.TryParse(parts[1].Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out var lat))
+                decimal parsedLat = 0m;
+                if (!string.IsNullOrWhiteSpace(parts[1])
+                    && !decimal.TryParse(parts[1].Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out parsedLat))
                 {
-                    latitude = lat;
+                    TempData["Error"] = $"Ligne {lineNumber} invalide: Latitude doit etre numerique. Aucune donnee n'a ete importee.";
+                    return RedirectToAction("MonAdresse");
+                }
+                else if (!string.IsNullOrWhiteSpace(parts[1]))
+                {
+                    latitude = parsedLat;
                 }
 
-                if (parts.Length > 2 && decimal.TryParse(parts[2].Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out var lng))
+                decimal parsedLng = 0m;
+                if (!string.IsNullOrWhiteSpace(parts[2])
+                    && !decimal.TryParse(parts[2].Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out parsedLng))
                 {
-                    longitude = lng;
+                    TempData["Error"] = $"Ligne {lineNumber} invalide: Longitude doit etre numerique. Aucune donnee n'a ete importee.";
+                    return RedirectToAction("MonAdresse");
+                }
+                else if (!string.IsNullOrWhiteSpace(parts[2]))
+                {
+                    longitude = parsedLng;
                 }
 
-                if (parts.Length > 3)
-                {
-                    var flag = parts[3].Trim().ToLowerInvariant();
-                    estPrincipale = flag == "1" || flag == "true" || flag == "oui" || flag == "yes";
-                }
+                var flag = parts[3].Trim().ToLowerInvariant();
+                estPrincipale = flag == "1" || flag == "true" || flag == "oui" || flag == "yes";
 
-                var newId = _adresseEmployeRepository.Create(new AdresseEmployeModel
+                toInsert.Add(new AdresseEmployeModel
                 {
                     IdEmploye = employeId,
                     Adresse = adresseText,
@@ -153,8 +187,13 @@ public class CompteController : Controller
                     Actif = true,
                     DateInsertion = DateTime.Now
                 });
+            }
 
-                if (estPrincipale)
+            foreach (var adresse in toInsert)
+            {
+                var newId = _adresseEmployeRepository.Create(adresse);
+
+                if (adresse.EstPrincipale)
                 {
                     _adresseEmployeRepository.SetAsMain(newId, employeId);
                 }
@@ -162,7 +201,7 @@ public class CompteController : Controller
                 imported++;
             }
 
-            TempData["Success"] = $"Import termine: {imported} adresse(s) ajoutee(s), {skipped} ligne(s) ignoree(s).";
+            TempData["Success"] = $"Import termine: {imported} adresse(s) ajoutee(s).";
         }
         catch (Exception ex)
         {

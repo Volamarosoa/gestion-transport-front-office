@@ -177,6 +177,12 @@ public class TransportController : Controller
             return View(model);
         }
 
+        if (model.Date.Date < DateTime.Today)
+        {
+            ModelState.AddModelError(nameof(model.Date), "La date de transport ne peut pas etre inferieure a la date du jour.");
+            return View(model);
+        }
+
         try
         {
             var siteId = ResolveSiteId();

@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Demander un Transport";
     var adresseParDefaut = ViewBag.AdresseParDefaut as string;
+    var todayIso = DateTime.Today.ToString("yyyy-MM-dd");
 }
 
 <div class="col-12">
@@ -15,8 +16,9 @@
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
                 <div class="form-group">
                     <label>Date du transport</label>
-                    <input asp-for="Date" type="date" class="form-control" required />
+                    <input asp-for="Date" type="date" min="@todayIso" class="form-control" required />
                     <span asp-validation-for="Date" class="text-danger"></span>
+                    <small class="text-muted">La date doit etre egale ou superieure a aujourd'hui.</small>
                 </div>
 
                 <div class="form-group">
@@ -48,6 +50,8 @@
 
                 <div class="alert alert-info">
                     Le trajet est limite a <strong>Domicile -> Travail</strong> ou <strong>Travail -> Domicile</strong> selon le type choisi.
+                    <br />
+                    Pour une demande de demain, la reference J-1 est fixee a 15:00.
                 </div>
 
                 <div class="form-group">

@@ -14,6 +14,7 @@ namespace GestionTransport.FrontOffice.Services
         private readonly IVehiculeRepository _vehiculeRepository;
         private readonly IHeureTransportRepository _heureTransportRepository;
         private readonly ITypeAffectationRepository _typeAffectationRepository;
+        private readonly ILogger<AffectationService> _logger;
 
         public AffectationService(
             IAffectationRepository affectationRepository,
@@ -23,7 +24,8 @@ namespace GestionTransport.FrontOffice.Services
             ISiteRepository siteRepository,
             IVehiculeRepository vehiculeRepository,
             IHeureTransportRepository heureTransportRepository,
-            ITypeAffectationRepository typeAffectationRepository)
+            ITypeAffectationRepository typeAffectationRepository,
+            ILogger<AffectationService> logger)
         {
             _affectationRepository = affectationRepository;
             _employeRepository = employeRepository;
@@ -33,6 +35,7 @@ namespace GestionTransport.FrontOffice.Services
             _vehiculeRepository = vehiculeRepository;
             _heureTransportRepository = heureTransportRepository;
             _typeAffectationRepository = typeAffectationRepository;
+            _logger = logger;
         }
 
         // Récupérer les affectations d'un employé
@@ -53,9 +56,18 @@ namespace GestionTransport.FrontOffice.Services
         public int Create(DateTime date, int idEmploye, int idAdresse, int idTypeTransport,
             int idSite, int idHeureTransport, string? commentaire)
         {
+            var now = DateTime.Now;
+            var dateTransport = date.Date;
+
+            if (dateTransport < now.Date)
+                throw new InvalidOperationException("La date de transport ne peut pas etre inferieure a la date du jour.");
+
             var employe = _employeRepository.GetById(idEmploye);
             if (employe == null)
-                throw new KeyNotFoundException($"Employé avec l'id {idEmploye} introuvable.");
+                throw new KeyNotFoundException($"Employe avec l'id {idEmploye} introuvable.");
+
+            if (!employe.EstActif())
+                throw new InvalidOperationException("Votre profil employe est inactif. Merci de contacter l'administrateur.");
 
             var adresse = _adresseRepository.GetById(idAdresse);
             if (adresse == null)
@@ -81,22 +93,31 @@ namespace GestionTransport.FrontOffice.Services
 
             // Auto-assignment de véhicule
             int? idVehicule = TryAutoAssignVehicle(date, idHeureTransport, idSite, idTypeTransport);
+
+            var isLateForTomorrow = IsLateTomorrowRequest(dateTransport, now);
+            var shouldStayPending = !employe.EstBeneficiaire || isLateForTomorrow;
+            var auditReason = BuildAuditReason(idEmploye, dateTransport, now, employe.EstBeneficiaire, isLateForTomorrow);
+            var finalComment = BuildFinalComment(commentaire, auditReason);
+
             var typeAuto = _typeAffectationRepository.GetByLibelle("Automatique");
-            int idType = typeAuto?.Id ?? 1;
+            var typeManuel = _typeAffectationRepository.GetByLibelle("Manuel");
 
             var affectation = new AffectationModel
             {
-                DateTransport = date.Date,
+                DateTransport = dateTransport,
                 IdEmploye = idEmploye,
                 IdAdresse = idAdresse,
                 IdTypeTransport = idTypeTransport,
                 IdSite = idSite,
                 IdVehicule = idVehicule,
                 IdHeureTransport = idHeureTransport,
-                EstValidee = null,
-                Commentaire = commentaire,
-                DateCreation = DateTime.Now,
-                IdType = idType,
+                EstValidee = shouldStayPending ? null : true,
+                Commentaire = finalComment,
+                DateCreation = now,
+                DateValidation = shouldStayPending ? null : now,
+                IdType = shouldStayPending
+                    ? (typeManuel?.Id ?? typeAuto?.Id ?? 1)
+                    : (typeAuto?.Id ?? typeManuel?.Id ?? 1),
                 EstArchive = false
             };
 
@@ -120,6 +141,68 @@ namespace GestionTransport.FrontOffice.Services
                 throw new InvalidOperationException("Impossible d'annuler une demande archivée.");
 
             _affectationRepository.Delete(id);
+        }
+
+        private static bool IsLateTomorrowRequest(DateTime dateTransport, DateTime now)
+        {
+            if (dateTransport != now.Date.AddDays(1))
+                return false;
+
+            var cutoff = now.Date.AddHours(15);
+            // Regle explicite: <= 15:00 accepte, > 15:00 en retard.
+            return now > cutoff;
+        }
+
+        private string BuildAuditReason(int idEmploye, DateTime dateTransport, DateTime now, bool estBeneficiaire, bool isLateForTomorrow)
+        {
+            if (dateTransport != now.Date.AddDays(1))
+            {
+                var acceptedStatus = estBeneficiaire ? "validee automatiquement" : "en attente de validation";
+                var reason = $"Decision technique: demande hors J-1; statut {acceptedStatus}.";
+                _logger.LogInformation("Affectation {Decision}. EmployeId={EmployeId}, DateTransport={DateTransport:yyyy-MM-dd}", reason, idEmploye, dateTransport);
+                return reason;
+            }
+
+            var cutoff = now.Date.AddHours(15);
+            var timeStatus = now > cutoff ? "apres 15:00" : "avant ou a 15:00";
+            string statusReason;
+
+            if (!estBeneficiaire)
+            {
+                statusReason = $"Decision technique: En attente - employe non beneficiaire ({timeStatus}).";
+            }
+            else if (isLateForTomorrow)
+            {
+                statusReason = "Decision technique: En attente - demande J-1 apres 15:00.";
+            }
+            else
+            {
+                statusReason = "Decision technique: Validee automatiquement - demande J-1 avant ou a 15:00.";
+            }
+
+            _logger.LogInformation(
+                "Regle cutoff appliquee. EmployeId={EmployeId}, DateTransport={DateTransport:yyyy-MM-dd}, Now={Now:HH:mm:ss}, Cutoff=15:00:00, IsLate={IsLate}, EstBeneficiaire={EstBeneficiaire}, Decision={Decision}",
+                idEmploye,
+                dateTransport,
+                now,
+                isLateForTomorrow,
+                estBeneficiaire,
+                statusReason);
+
+            return statusReason;
+        }
+
+        private static string BuildFinalComment(string? userComment, string auditReason)
+        {
+            var parts = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(userComment))
+                parts.Add(userComment.Trim());
+
+            parts.Add(auditReason);
+
+            var combined = string.Join(" | ", parts);
+            return combined.Length <= 255 ? combined : combined.Substring(0, 255);
         }
 
         private int? TryAutoAssignVehicle(DateTime date, int idHeureTransport, int idSite, int idTypeTransport)

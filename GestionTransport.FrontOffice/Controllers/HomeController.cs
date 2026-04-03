@@ -191,6 +191,14 @@ public class HomeController : Controller
         };
 
         // Statistiques personnelles de l'employé
+        var debutMois = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+        var finMois = debutMois.AddMonths(1);
+
+        ViewBag.TransportsMoisEnCours = allAffectations.Count(a =>
+            a.DateTransport.HasValue &&
+            a.DateTransport.Value.Date >= debutMois &&
+            a.DateTransport.Value.Date < finMois);
+
         ViewBag.TransportsAujourdhui = allAffectations.Count(a =>
             a.DateTransport?.Date == DateTime.Today);
         ViewBag.EnCours = allAffectations.Count(a =>

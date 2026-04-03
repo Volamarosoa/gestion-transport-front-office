@@ -28,12 +28,12 @@
                             }
                             <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
                             <div class="form-group mb-3 floating-group">
-                                <input asp-for="Matricule" class="form-control" placeholder="EMP001" />
+                                <input asp-for="Matricule" class="form-control" value="EMP001" />
                                 <label asp-for="Matricule" class="fw-semibold floating-label">Matricule</label>
                                 <span asp-validation-for="Matricule" class="text-danger"></span>
                             </div>
                             <div class="form-group mb-3 floating-group">
-                                <input asp-for="MotDePasse" class="form-control" type="password" placeholder="password123" />
+                                <input asp-for="MotDePasse" class="form-control" type="password" value="password123" />
                                 <label asp-for="MotDePasse" class="fw-semibold floating-label"> Mot de passe</label>
                                 <span asp-validation-for="MotDePasse" class="text-danger"></span>
                             </div>

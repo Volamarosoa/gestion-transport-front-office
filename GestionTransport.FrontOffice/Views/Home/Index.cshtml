@@ -11,24 +11,16 @@
             <div class="col-sm-4">
                 <div class="card support-bar overflow-hidden">
                     <div class="card-body pb-0">
-                        <h2 class="m-0">@ViewBag.TransportsAujourdhui</h2>
-                        <span class="text-c-blue">Transports aujourd'hui</span>
-                        <p class="mb-3 mt-3">Nombre total de transports effectués aujourd'hui.</p>
+                        <h2 class="m-0">@ViewBag.TransportsMoisEnCours</h2>
+                        <span class="text-c-blue">Transports du mois en cours</span>
+                        <p class="mb-3 mt-3">Nombre total de transports effectues sur le mois en cours.</p>
                     </div>
                     <div id="support-chart"></div>
                     <div class="card-footer bg-primary text-white">
                         <div class="row text-center">
                             <div class="col">
-                                <h4 class="m-0 text-white">@ViewBag.EnCours</h4>
-                                <span>En cours</span>
-                            </div>
-                            <div class="col">
-                                <h4 class="m-0 text-white">@ViewBag.Termines</h4>
-                                <span>Terminés</span>
-                            </div>
-                            <div class="col">
-                                <h4 class="m-0 text-white">@ViewBag.Annules</h4>
-                                <span>Annulés</span>
+                                <h4 class="m-0 text-white">@ViewBag.TransportsMoisEnCours</h4>
+                                <span>Total mensuel</span>
                             </div>
                         </div>
                     </div>
