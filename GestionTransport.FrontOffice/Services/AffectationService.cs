@@ -77,6 +77,19 @@ namespace GestionTransport.FrontOffice.Services
             if (typeTransport == null)
                 throw new KeyNotFoundException($"Type de transport avec l'id {idTypeTransport} introuvable.");
 
+            var typeLibelle = typeTransport.Libelle?.Trim() ?? string.Empty;
+
+            if (dateTransport == now.Date && IsAller(typeLibelle))
+                throw new InvalidOperationException("Un transport Aller pour aujourd'hui doit etre demande hier avant 15:00.");
+            
+            if (dateTransport == now.Date.AddDays(1) && IsAller(typeLibelle) && now > now.Date.AddHours(15))
+                throw new InvalidOperationException(
+                    "Apres 15:00, vous ne pouvez plus demander l'Aller pour demain. " +
+                    "Aller-Retour est aussi refuse. Vous pouvez seulement demander un Retour.");
+
+            if (dateTransport == now.Date && IsRetour(typeLibelle) && now > now.Date.AddHours(15))
+                throw new InvalidOperationException("Un transport Retour pour aujourd'hui doit etre demande avant ou a 15:00.");
+
             var site = _siteRepository.GetById(idSite);
             if (site == null)
                 throw new KeyNotFoundException($"Site avec l'id {idSite} introuvable.");
@@ -84,6 +97,18 @@ namespace GestionTransport.FrontOffice.Services
             var heureTransport = _heureTransportRepository.GetById(idHeureTransport);
             if (heureTransport == null)
                 throw new KeyNotFoundException($"Heure de transport avec l'id {idHeureTransport} introuvable.");
+
+            // Retour seul pour aujourd'hui: l'heure souhaitee doit etre >= a l'heure courante.
+            if (dateTransport == now.Date
+                && IsRetour(typeLibelle)
+                && !IsAller(typeLibelle)
+                && heureTransport.Heure.HasValue
+                && heureTransport.Heure.Value < now.TimeOfDay)
+            {
+                throw new InvalidOperationException(
+                    "Pour un Retour aujourd'hui, l'heure souhaitee ne peut pas etre inferieure a l'heure actuelle.");
+            }
+
 
             // Vérifier si une affectation existe déjà pour cette date/type
             var existing = _affectationRepository.GetByEmployeAndDate(idEmploye, date, idTypeTransport);
@@ -94,9 +119,11 @@ namespace GestionTransport.FrontOffice.Services
             // Auto-assignment de véhicule
             int? idVehicule = TryAutoAssignVehicle(date, idHeureTransport, idSite, idTypeTransport);
 
-            var isLateForTomorrow = IsLateTomorrowRequest(dateTransport, now);
-            var shouldStayPending = !employe.EstBeneficiaire || isLateForTomorrow;
-            var auditReason = BuildAuditReason(idEmploye, dateTransport, now, employe.EstBeneficiaire, isLateForTomorrow);
+            var cutoff = ResolveCutoff(dateTransport, typeLibelle);
+            // Regle explicite: <= 15:00 accepte, > 15:00 en retard.
+            var isLate = now > cutoff;
+            var shouldStayPending = !employe.EstBeneficiaire || isLate;
+            var auditReason = BuildAuditReason(idEmploye, dateTransport, typeLibelle, now, cutoff, employe.EstBeneficiaire, isLate, shouldStayPending);
             var finalComment = BuildFinalComment(commentaire, auditReason);
 
             var typeAuto = _typeAffectationRepository.GetByLibelle("Automatique");
@@ -124,6 +151,48 @@ namespace GestionTransport.FrontOffice.Services
             return _affectationRepository.Create(affectation);
         }
 
+        private static DateTime ResolveCutoff(DateTime dateTransport, string typeLibelle)
+        {
+            // Aller (et Aller-Retour) : J-1 15:00, Retour : jour J 15:00.
+            if (IsRetour(typeLibelle) && !IsAller(typeLibelle))
+                return dateTransport.Date.AddHours(15);
+
+            return dateTransport.Date.AddDays(-1).AddHours(15);
+        }
+
+        private static bool IsAller(string typeLibelle)
+        {
+            return typeLibelle.Contains("aller", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsRetour(string typeLibelle)
+        {
+            return typeLibelle.Contains("retour", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private string BuildAuditReason(int idEmploye, DateTime dateTransport, string typeLibelle, DateTime now, DateTime cutoff, bool estBeneficiaire, bool isLate, bool isPending)
+        {
+            var decision = isPending ? "En attente" : "Validee automatiquement";
+            var ruleContext = isLate
+                ? $"Demande en retard ({now:yyyy-MM-dd HH:mm:ss} > cutoff {cutoff:yyyy-MM-dd HH:mm:ss})"
+                : $"Demande dans le delai ({now:yyyy-MM-dd HH:mm:ss} <= cutoff {cutoff:yyyy-MM-dd HH:mm:ss})";
+
+            var reason = $"Decision technique: {decision} - Type={typeLibelle}; {ruleContext}; EstBeneficiaire={estBeneficiaire}.";
+
+            _logger.LogInformation(
+                "Regle transport appliquee. EmployeId={EmployeId}, Type={Type}, DateTransport={DateTransport:yyyy-MM-dd}, Now={Now:yyyy-MM-dd HH:mm:ss}, Cutoff={Cutoff:yyyy-MM-dd HH:mm:ss}, IsLate={IsLate}, EstBeneficiaire={EstBeneficiaire}, Decision={Decision}",
+                idEmploye,
+                typeLibelle,
+                dateTransport,
+                now,
+                cutoff,
+                isLate,
+                estBeneficiaire,
+                decision);
+
+            return reason;
+        }
+
         // Annuler une demande en attente (employé annule sa propre demande)
         public void Annuler(int id, int idEmploye)
         {
@@ -141,55 +210,6 @@ namespace GestionTransport.FrontOffice.Services
                 throw new InvalidOperationException("Impossible d'annuler une demande archivée.");
 
             _affectationRepository.Delete(id);
-        }
-
-        private static bool IsLateTomorrowRequest(DateTime dateTransport, DateTime now)
-        {
-            if (dateTransport != now.Date.AddDays(1))
-                return false;
-
-            var cutoff = now.Date.AddHours(15);
-            // Regle explicite: <= 15:00 accepte, > 15:00 en retard.
-            return now > cutoff;
-        }
-
-        private string BuildAuditReason(int idEmploye, DateTime dateTransport, DateTime now, bool estBeneficiaire, bool isLateForTomorrow)
-        {
-            if (dateTransport != now.Date.AddDays(1))
-            {
-                var acceptedStatus = estBeneficiaire ? "validee automatiquement" : "en attente de validation";
-                var reason = $"Decision technique: demande hors J-1; statut {acceptedStatus}.";
-                _logger.LogInformation("Affectation {Decision}. EmployeId={EmployeId}, DateTransport={DateTransport:yyyy-MM-dd}", reason, idEmploye, dateTransport);
-                return reason;
-            }
-
-            var cutoff = now.Date.AddHours(15);
-            var timeStatus = now > cutoff ? "apres 15:00" : "avant ou a 15:00";
-            string statusReason;
-
-            if (!estBeneficiaire)
-            {
-                statusReason = $"Decision technique: En attente - employe non beneficiaire ({timeStatus}).";
-            }
-            else if (isLateForTomorrow)
-            {
-                statusReason = "Decision technique: En attente - demande J-1 apres 15:00.";
-            }
-            else
-            {
-                statusReason = "Decision technique: Validee automatiquement - demande J-1 avant ou a 15:00.";
-            }
-
-            _logger.LogInformation(
-                "Regle cutoff appliquee. EmployeId={EmployeId}, DateTransport={DateTransport:yyyy-MM-dd}, Now={Now:HH:mm:ss}, Cutoff=15:00:00, IsLate={IsLate}, EstBeneficiaire={EstBeneficiaire}, Decision={Decision}",
-                idEmploye,
-                dateTransport,
-                now,
-                isLateForTomorrow,
-                estBeneficiaire,
-                statusReason);
-
-            return statusReason;
         }
 
         private static string BuildFinalComment(string? userComment, string auditReason)
