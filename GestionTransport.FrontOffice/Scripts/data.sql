@@ -61,7 +61,17 @@ VALUES (3, '$2a$11$3u66GfVRa561jQuDr6chYuYJ4jD3HX/pLLqFwNA.ShzA6ExuFhfzK', 2, 1)
 
 INSERT INTO Authentification (IdEmploye, MotDePasse, IdRole, Actif)
 VALUES (4, '$2a$11$3u66GfVRa561jQuDr6chYuYJ4jD3HX/pLLqFwNA.ShzA6ExuFhfzK', 2, 1); -- EMP004
-GO
+
+
+INSERT INTO Authentification (IdEmploye, MotDePasse, IdRole, Actif)
+VALUES (6, '$2a$11$3u66GfVRa561jQuDr6chYuYJ4jD3HX/pLLqFwNA.ShzA6ExuFhfzK', 2, 1); -- EMP004
+
+INSERT INTO Authentification (IdEmploye, MotDePasse, IdRole, Actif)
+VALUES (7, '$2a$11$3u66GfVRa561jQuDr6chYuYJ4jD3HX/pLLqFwNA.ShzA6ExuFhfzK', 2, 1); -- EMP004
+
+INSERT INTO Authentification (IdEmploye, MotDePasse, IdRole, Actif)
+VALUES (8, '$2a$11$3u66GfVRa561jQuDr6chYuYJ4jD3HX/pLLqFwNA.ShzA6ExuFhfzK', 2, 1); -- EMP004
+
 
 -- =============================================
 -- ADRESSES EMPLOYES

@@ -84,9 +84,11 @@ public class TransportController : Controller
 
     private int ResolveHeureTransportId(TimeSpan? heureSouhaitee)
     {
+        Console.WriteLine($"heureSouhaitee: {heureSouhaitee}");
         if (heureSouhaitee.HasValue)
         {
             var exacte = _heureTransportRepository.GetByHeure(heureSouhaitee.Value);
+            Console.WriteLine($"exacte: {exacte}");
             if (exacte != null)
                 return exacte.Id;
         }
